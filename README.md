@@ -21,6 +21,19 @@ tools/hep-lab-space status               # 聚合控制仓与四仓的分支、�
 node --test tools/test/*.test.mjs
 ```
 
+展示控制仓及四个子仓的远程地址和当前提交：
+
+```sh
+tools/hep-lab-repos show
+```
+
+拉取五个仓库的最新 `main` 代码时，工具先尝试安全更新控制仓，再逐一对 clean 且已位于目标分支的工作树执行快进更新；控制仓或子仓存在未提交改动、detached HEAD 或其他分支时会保留工作树并报告未更新对象：
+
+```sh
+tools/hep-lab-repos pull
+tools/hep-lab-repos pull --dry-run
+```
+
 只投影清单显式列出的 Skill；整个包连同 references、scripts、assets 一起处理。目标被手工修改时停止覆盖并显示路径，先保存改动或移到唯一来源。删除清单项会移除未经修改的旧投影；新增未管理文件保持原样并提示。两种模式都不复制运行时凭据、HOME 或会话。
 
 `.hep-lab/manifest.json` 记录来源提交、工作树状态、包摘要和物化方式。`hep-lab.yaml` 保持平台运行入口兼容；这些本地结果均不提交。重复同步无变化时不改写文件。`--root <目录>` 可指定已包含本仓上下文源码与配置的工作区；命令从任意 cwd 启动都默认使用脚本所属工作区。

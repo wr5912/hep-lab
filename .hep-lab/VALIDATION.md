@@ -7,7 +7,8 @@
 | 范围 | 执行与结果 |
 | --- | --- |
 | 上下文与投影修复 | `tools/hep-lab-space` 不再把管理 HOME 的本地 `AGENTS.override.md` 当作全新检出的硬依赖；文件存在时优先使用，缺失时回退到版本化 `README.md`。 |
-| 工作区单测 | `node --test tools/test/*.test.mjs`：14 项通过，新增覆盖管理 HOME 没有本地研发覆盖文件的冷启动路径；`git diff --check` 通过。 |
+| 工作区单测 | `node --test tools/test/*.test.mjs tools/test/repositories.test.mjs`：16 项通过，覆盖管理 HOME 冷启动和仓库更新工具的展示、快进、dirty 与 detached 保护；`git diff --check` 通过。 |
+| 仓库更新工具 | `tools/hep-lab-repos show --json` 正确展示五个仓库的 remote、分支、提交和 dirty 状态；`pull` 使用 `fetch --prune` 与 `merge --ff-only`，不切换或重置工作树。 |
 | 真实工作区初始化 | `tools/hep-lab-space init` 完成；3 个已有子仓提交与 `.hep-lab/sources.json` 锁定提交不同，工具保留现有工作树并给出警告，没有覆盖或切换。 |
 | 真实上下文与边界 | `tools/hep-lab-space verify --fast`、`tools/hep-lab-space doctor` 均通过；四个子仓均 clean，根仓没有 gitlink、`.gitmodules` 或子仓文件入索引。 |
 | 业务与平台效果 | 本次没有重新启动平台、执行真实业务 Run、浏览器验收或外部服务测试；这些层次仍以对应程序仓验收矩阵为准。 |
