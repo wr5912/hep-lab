@@ -1,0 +1,9 @@
+/harness-engineering-platform/
+/harness-engineering-platform-data/
+/platform-manager-dsh-home/
+/business-agents/
+/hep-lab.yaml
+/.agents/skills/
+/.hep-lab/manifest.json
+/.hep-lab/evidence/
+*.tmp

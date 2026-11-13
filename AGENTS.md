@@ -1,0 +1,18 @@
+# hep-lab 工作区
+
+本仓库维护四仓工作区的初始化、研发上下文和共享开发 Skill，不包含四仓源码。默认中文；在真实工作树中完成修改、验证和提交。
+
+| 仓库 | 当前事实源 |
+| --- | --- |
+| harness-engineering-platform | 平台程序、MCP 框架与执行器、通用 CLI、Runtime 适配器及平台测试 |
+| harness-engineering-platform-data | 研究与评测记录、实例状态、用户配置的 MCP 服务与组合编排 |
+| platform-manager-dsh-home | 管理助手原生 DSH HOME：身份、Skill、Preset、Profile 及 MCP 使用与开发方法 |
+| business-agents | 业务智能体原生 Harness 文件，含各自 DSH MCP 配置 |
+
+进入子仓先读其研发指引；Git 仓库边界会影响 Codex 的上下文发现，不能假设从子仓启动时自动继承本文件。管理助手仓根 `AGENTS.md` 是运行身份，研发协作读 `AGENTS.override.md`。阅读业务指令不代表切换开发身份。
+
+先定位唯一事实源，再修改实现和直接消费者。管理及业务 Harness 保持文件形式，不存数据库；业务资产位于 `agents/<id>/`，不添加多余包装层或逐智能体研发说明。复用 DSH 原生装载与执行能力。
+
+工作区入口为 `tools/hep-lab-space`：`init` 准备四仓，`sync` 物化允许的共享 Skill，`diff` 查看漂移，`verify --fast` 核对上下文，`doctor` 定位环境问题。共享 Skill 源码位于 `skills/`，清单位于 `.hep-lab/sources.json`；生成的 `.agents/skills/` 不直接编辑。平台完整运行检查仍用程序仓的 `platform/hep-lab doctor`。
+
+已授权的工作连续完成。验证受影响的实际路径，区分静态检查、模拟、真实模型和外部系统结果；不把临时测试副本称为真实仓库修复。只在当前功能需要时增加检查，不引入审批或生产治理框架。提交前核对各仓 diff；推送按用户授权执行。

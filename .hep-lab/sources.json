@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "mode": "symlink",
+  "repositories": {
+    "platform": {
+      "url": "git@github.com:wr5912/harness-engineering-platform.git",
+      "ref": "main",
+      "commit": "e9e41e5db5334ccd50e78549c3a8b279826e494e"
+    },
+    "data": {
+      "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
+      "ref": "main",
+      "commit": "17cde0ca005b4e44a0c4f346b9a470c6d4153f2b"
+    },
+    "platform_manager_dsh_home": {
+      "url": "git@github.com:wr5912/platform-manager-dsh-home.git",
+      "ref": "main",
+      "commit": "73bdaf65497612e350548a5123a214ef9a5f3a0f"
+    },
+    "business_agents": {
+      "url": "git@github.com:wr5912/business-agents.git",
+      "ref": "main",
+      "commit": "f8763716da8c16c23b9bb8ce05e660ccc66fdc18"
+    }
+  },
+  "skills": [
+    {
+      "name": "hep-cross-repo-change",
+      "repository": "workspace",
+      "path": "skills/hep-cross-repo-change",
+      "scope": "四仓职责与跨仓实现交付"
+    },
+    {
+      "name": "hep-lab-space",
+      "repository": "workspace",
+      "path": "skills/hep-lab-space",
+      "scope": "工作区准备、来源诊断与同步"
+    },
+    {
+      "name": "hep-skill-governance",
+      "repository": "workspace",
+      "path": "skills/hep-skill-governance",
+      "scope": "共享开发技能归属、触发与投影"
+    }
+  ]
+}
