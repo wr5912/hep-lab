@@ -1,6 +1,6 @@
 # hep-lab
 
-四仓开发工作区。仓库职责和协作入口见 [AGENTS.md](AGENTS.md)。工作区工具需要 Node.js 22.18 及以上版本和 Git，无需 Python 或平台依赖。Node.js 22.18 起默认支持直接运行 TypeScript；完整平台的环境要求见[程序仓说明](https://github.com/wr5912/harness-engineering-platform/blob/main/README.md#快速启动)。
+四仓开发工作区。仓库职责和协作入口见 [AGENTS.md](AGENTS.md)。各仓统一使用 Node.js 24.9+、Python 3.10+。工作区工具只需要 Node.js 和 Git；完整平台的环境要求见[程序仓说明](https://github.com/wr5912/harness-engineering-platform/blob/main/README.md#快速启动)。
 
 ```sh
 git clone https://github.com/wr5912/hep-lab.git
