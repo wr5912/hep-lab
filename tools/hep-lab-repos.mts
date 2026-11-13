@@ -7,7 +7,7 @@ import { names, originIdentity } from './hep-lab-space.mts'
 
 type RepoConfig = { url: string, ref?: string, commit?: string }
 type Config = { repositories: Record<string, RepoConfig> }
-type Repository = { key: string, name: string, path: string, url: string, ref: string | null, configuredCommit?: string }
+type Repository = { key: string, name: string, path: string, url: string, ref: string | null, remote?: string, configuredCommit?: string }
 type RepositoryState = Repository & { branch: string | null, commit: string | null, dirty: boolean, error?: string }
 
 const commandGit = (path: string, args: string[]) => execFileSync(
@@ -42,13 +42,20 @@ function repositories(root: string): Repository[] {
   return [rootRepository(root), ...childRepositories(root, config)]
 }
 
+function matchingRemote(path: string, source: string) {
+  for (const remote of commandGit(path, ['remote']).split('\n').filter(Boolean)) {
+    const url = commandGit(path, ['remote', 'get-url', remote])
+    if (originIdentity(url) === originIdentity(source)) return { remote, url }
+  }
+  throw Error(`没有匹配来源的远端：${source}`)
+}
+
 function inspect(repository: Repository): RepositoryState {
   try {
-    const actualUrl = commandGit(repository.path, ['remote', 'get-url', 'origin'])
-    if (originIdentity(actualUrl) !== originIdentity(repository.url)) throw Error(`origin 不匹配：${actualUrl}`)
+    const source = repository.remote ? { remote: repository.remote, url: commandGit(repository.path, ['remote', 'get-url', repository.remote]) } : matchingRemote(repository.path, repository.url)
     let branch: string | null = null
     try { branch = commandGit(repository.path, ['symbolic-ref', '--quiet', '--short', 'HEAD']) || null } catch {}
-    return { ...repository, url: actualUrl, branch, commit: commandGit(repository.path, ['rev-parse', 'HEAD']), dirty: Boolean(commandGit(repository.path, ['status', '--porcelain'])) }
+    return { ...repository, ...source, branch, commit: commandGit(repository.path, ['rev-parse', 'HEAD']), dirty: Boolean(commandGit(repository.path, ['status', '--porcelain'])) }
   } catch (error) {
     return { ...repository, branch: null, commit: null, dirty: false, error: (error as Error).message }
   }
@@ -66,8 +73,8 @@ function pullOne(repository: Repository, dryRun: boolean) {
   if (state.branch !== repository.ref) return { ...state, action: 'skip', message: `当前分支为 ${state.branch}，目标为 ${repository.ref}，未切换分支`, ok: false }
   if (dryRun) return { ...state, action: 'would-pull', message: `将快进到 origin/${repository.ref}`, ok: true }
   try {
-    commandGit(repository.path, ['fetch', '--prune', 'origin', repository.ref])
-    commandGit(repository.path, ['merge', '--ff-only', `origin/${repository.ref}`])
+    commandGit(repository.path, ['fetch', '--prune', state.remote!, repository.ref])
+    commandGit(repository.path, ['merge', '--ff-only', `${state.remote}/${repository.ref}`])
     const next = inspect(repository)
     return { ...next, action: 'pulled', message: `已快进到 ${next.commit}`, ok: true }
   } catch (error) {
@@ -91,6 +98,7 @@ function printState(state: RepositoryState) {
   console.log(`${state.name}`)
   console.log(`  path: ${state.path}`)
   console.log(`  remote: ${state.url}`)
+  if (state.remote) console.log(`  remote_name: ${state.remote}`)
   console.log(`  branch: ${state.branch ?? 'detached/missing'}`)
   console.log(`  commit: ${state.commit ?? 'unknown'}`)
   console.log(`  dirty: ${state.dirty ? 'yes' : 'no'}`)
