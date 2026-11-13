@@ -13,7 +13,7 @@
 | 真实上下文与边界 | `tools/hep-lab-space verify --fast`、`doctor` 均通过；根仓没有 gitlink、`.gitmodules` 或子仓文件入索引，四个子仓均 clean。business-agents 仅增加本地 `gitlab` remote 配置，未修改工作树或子仓提交。 |
 | 当前整改验证 | 平台 `platform/hep`、Agent CLI help 与 clean archive `dsh-deploy --help` 通过；业务 child guard 2/2、业务资产校验 22/22、MCP 当前清单 2/2；本地 Mock MCP 完成 discovery/tools/list/tool call，远端独立包完成 status、checksum、修改资产重启回读。平台完整启动受远端 Node/磁盘与数据初始化条件限制。 |
 
-本轮整改提交为：platform `0b9bbe47db5a0fccf58d998271b2b996f6c5e929`，data `b97df86719495d7a7d33b2a5b68887f31a16b712`，platform-manager-dsh-home `ff3390707c11084e3c3e5836ed4fdab512190663`，business-agents `21484bc464525b840d3b8775a0074fb489d58e61`；四个提交均已推送各自 `origin/main`。
+本轮整改提交为：platform `0b9bbe47db5a0fccf58d998271b2b996f6c5e929`，data `4ecbb213334c1c0e560e716490ce9a604f6cb8f2`，platform-manager-dsh-home `df7d9b89b0bc8da60a68ffa21938740fdf3f85d2`，business-agents `21484bc464525b840d3b8775a0074fb489d58e61`；四个提交均已推送各自 `origin/main`。
 
 ## /home/luopeng/hep-lab 验收记录
 
