@@ -71,7 +71,7 @@ function pullOne(repository: Repository, dryRun: boolean) {
   if (state.dirty) return { ...state, action: 'skip', message: '工作树有未提交改动，未拉取', ok: false }
   if (!state.branch || !repository.ref) return { ...state, action: 'skip', message: '当前为 detached HEAD，未切换分支', ok: false }
   if (state.branch !== repository.ref) return { ...state, action: 'skip', message: `当前分支为 ${state.branch}，目标为 ${repository.ref}，未切换分支`, ok: false }
-  if (dryRun) return { ...state, action: 'would-pull', message: `将快进到 origin/${repository.ref}`, ok: true }
+  if (dryRun) return { ...state, action: 'would-pull', message: `将快进到 ${state.remote}/${repository.ref}`, ok: true }
   try {
     commandGit(repository.path, ['fetch', '--prune', state.remote!, repository.ref])
     commandGit(repository.path, ['merge', '--ff-only', `${state.remote}/${repository.ref}`])

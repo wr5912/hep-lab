@@ -43,6 +43,7 @@ function fixture(t) {
   const root = join(temp, 'lab')
   execFileSync('git', ['clone', '-q', rootSource, root])
   for (const name of Object.values(names)) execFileSync('git', ['clone', '-q', repositorySources[Object.entries(names).find(([, value]) => value === name)[0]].url, join(root, name)])
+  git(join(root, names.business_agents), 'remote', 'rename', 'origin', 'gitlab')
   return { temp, root, sources: repositorySources }
 }
 
@@ -52,6 +53,8 @@ test('show 暴露控制仓和四个子仓的远程地址与当前提交', t => {
   assert.equal(result.length, 5)
   assert.deepEqual(result.map(item => item.name), ['hep-lab', ...Object.values(names)])
   assert.ok(result.every(item => item.url && item.commit && item.branch === 'main' && !item.dirty && !item.error))
+  const preview = pullRepositories(f.root, true)
+  assert.equal(preview.results.find(item => item.name === names.business_agents).message, '将快进到 gitlab/main')
   const cli = spawnSync(process.execPath, [resolve('tools/hep-lab-repos.mts'), 'show', '--root', f.root, '--json'], { encoding: 'utf8' })
   assert.equal(cli.status, 0, cli.stderr)
   assert.equal(JSON.parse(cli.stdout).length, 5)
