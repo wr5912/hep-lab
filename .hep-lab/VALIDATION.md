@@ -10,10 +10,10 @@
 | 工作区单测 | `node --test tools/test/*.test.mjs`：17 项通过，覆盖管理 HOME 冷启动、来源远端名称和仓库更新工具的展示、快进、dirty 与 detached 保护；`git diff --check` 通过。 |
 | 仓库更新工具 | `tools/hep-lab-repos show --json` 展示五个仓库的 remote、分支、提交和 dirty 状态；本地 `business-agents` 保留 GitHub `origin`，补充匹配来源清单的 `gitlab` remote；`pull` 使用 `fetch --prune` 与 `merge --ff-only`，不切换或重置工作树。 |
 | 真实工作区初始化 | `tools/hep-lab-space init` 完成；3 个已有子仓提交与 `.hep-lab/sources.json` 锁定提交不同，工具保留现有工作树并给出警告，没有覆盖或切换。 |
-| 真实上下文与边界 | `tools/hep-lab-space verify --fast`、`doctor` 均通过；根仓没有 gitlink、`.gitmodules` 或子仓文件入索引，四个子仓均 clean。business-agents 仅增加本地 `gitlab` remote 配置，未修改工作树或子仓提交。 |
+| 真实上下文与边界 | `tools/hep-lab-space verify --fast`、`doctor` 均通过；`manager-workspace/` 由受控相对链接指向 data 与 business-agents，入口漂移校验通过；根仓没有 gitlink、`.gitmodules` 或子仓文件入索引，四个子仓均 clean。 |
 | 当前整改验证 | 平台 `platform/hep`、Agent CLI help、MCP catalog/show/validate 与 clean archive `dsh-deploy --help` 通过；业务 child guard 2/2、业务资产校验 22/22、MCP 当前清单 2/2；业务当前 `evaluation.md` 已迁入 business-agents，平台评测读取、固定来源物化和跨仓 Run provenance 定向回归通过；本地 Mock MCP 完成 discovery/tools/list/tool call，远端独立包完成 status、checksum、修改资产重启回读。平台完整启动受远端 Node/磁盘与数据初始化条件限制。 |
 
-本轮整改提交为：platform `4f45098476dd432873e8a188e21cb00e17ea7d4a`，data `603592b98f7eab286359962db5225a11f18c2b8d`，platform-manager-dsh-home `6af26b7a1ac682e10b4e00c4bbf1ecee9db10f5b`，business-agents `1f7743aacd34b9f48d12583f8fe9ca99606ffd96`；四个提交均已推送各自 `origin/main`。新增 `config/assistant-workspace.json` 固定 data + business-agents 业务范围，平台 context/status 返回该范围并拒绝程序仓和管理 HOME 作为业务目标；平台工作区定向测试 5/5 通过，TypeScript 检查通过。
+本轮整改提交为：platform `4a041c59fce9b0bd32c1b239d9784ca647ef2657`，data `324b3d28db64fdf5caa3d19f77e8d23fa958a4fa`，platform-manager-dsh-home `6af26b7a1ac682e10b4e00c4bbf1ecee9db10f5b`，business-agents `1f7743aacd34b9f48d12583f8fe9ca99606ffd96`；四个提交均已推送各自 `origin/main`。新增 `config/assistant-workspace.json` 固定 data + business-agents 业务范围，建立 `manager-workspace/` 默认入口并由工作区工具自动创建/校验；平台 context/status 返回该范围并拒绝程序仓和管理 HOME 作为业务目标；工作区工具测试 15/15、平台工作区定向测试 5/5 通过，TypeScript 检查通过。
 
 ## /home/luopeng/hep-lab 验收记录
 
