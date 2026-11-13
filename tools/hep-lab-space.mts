@@ -19,6 +19,13 @@ function git(path: string | undefined, args: string[]) {
 export function originIdentity(url: string) {
   return url.replace(/^git@([^:]+):/, 'https://$1/').replace(/^ssh:\/\/git@/, 'https://').replace(/\.git\/?$/, '').replace(/\/$/, '')
 }
+function sourceRemote(path: string, source: string) {
+  for (const remote of git(path, ['remote']).split('\n').filter(Boolean)) {
+    const url = git(path, ['remote', 'get-url', remote])
+    if (originIdentity(url) === originIdentity(source)) return { remote, url }
+  }
+  throw Error(`仓库来源不同，保持原样：${path}`)
+}
 function inside(root: string, path: string) {
   const result = resolve(root, path), rel = relative(root, result)
   if (isAbsolute(path) || rel === '..' || rel.startsWith('../')) throw Error(`路径超出来源仓库：${path}`)
@@ -70,9 +77,8 @@ function repositoryStates(root: string, config: Config) {
     const path = join(root, name)
     if (!exists(join(path, '.git'))) throw Error(`仓库尚未准备：${path}，先运行 init`)
     if (resolve(git(path, ['rev-parse', '--show-toplevel'])) !== path) throw Error(`目录不是独立仓库：${path}`)
-    const url = git(path, ['remote', 'get-url', 'origin'])
-    if (originIdentity(url) !== originIdentity(config.repositories[key].url)) throw Error(`仓库来源不同：${path}`)
-    return [key, { path: name, url, ref: config.repositories[key].ref ?? null, configured_commit: config.repositories[key].commit ?? null, commit: git(path, ['rev-parse', 'HEAD']), dirty: Boolean(git(path, ['status', '--porcelain'])) }]
+    const source = sourceRemote(path, config.repositories[key].url)
+    return [key, { path: name, ...source, ref: config.repositories[key].ref ?? null, configured_commit: config.repositories[key].commit ?? null, commit: git(path, ['rev-parse', 'HEAD']), dirty: Boolean(git(path, ['status', '--porcelain'])) }]
   }))
 }
 function contextIssues(root: string) {
@@ -185,7 +191,7 @@ export function initialize(root: string, allowFloating = false, mode?: 'symlink'
     if ((!repo.commit || !/^[0-9a-f]{40}$/.test(repo.commit)) && !allowFloating) throw Error(`${key} 需要固定的 40 位提交；开发时可使用 --allow-floating-ref`)
     if (exists(path)) {
       if (!exists(join(path, '.git')) || resolve(git(path, ['rev-parse', '--show-toplevel'])) !== path) throw Error(`已有目录不是对应的独立仓库，保持原样：${path}`)
-      if (originIdentity(git(path, ['remote', 'get-url', 'origin'])) !== originIdentity(repo.url)) throw Error(`仓库来源不同，保持原样：${path}`)
+      sourceRemote(path, repo.url)
     }
   }
   for (const [key, name] of Object.entries(names)) {
