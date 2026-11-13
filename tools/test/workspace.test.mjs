@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import test from 'node:test'
@@ -34,6 +34,10 @@ test('首次克隆固定提交，真实包资源与可执行权限可达；重�
   assert.equal(first.changed, true); assert.deepEqual(first.warnings, [])
   for (const [key, name] of Object.entries(names)) assert.equal(git(join(f.root, name), 'rev-parse', 'HEAD'), f.config.repositories[key].commit)
   assert.equal(readlinkSync(f.target), '../../skills/demo')
+  assert.equal(readlinkSync(join(f.root, 'manager-workspace', names.data)), `../${names.data}`)
+  assert.equal(readlinkSync(join(f.root, 'manager-workspace', names.business_agents)), `../${names.business_agents}`)
+  assert.equal(realpathSync(join(f.root, 'manager-workspace', names.data)), realpathSync(join(f.root, names.data)))
+  assert.equal(realpathSync(join(f.root, 'manager-workspace', names.business_agents)), realpathSync(join(f.root, names.business_agents)))
   assert.equal(readFileSync(join(f.target, 'references/detail.md'), 'utf8'), 'resource\n')
   const manifest = join(f.root, '.hep-lab/manifest.json'), runtime = join(f.root, 'hep-lab.yaml')
   const before = [readFileSync(manifest, 'utf8'), statSync(manifest).mtimeMs, statSync(runtime).mtimeMs]

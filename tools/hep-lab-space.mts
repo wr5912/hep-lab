@@ -1,11 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { existsSync, lstatSync, readFileSync, readdirSync, readlinkSync, mkdirSync, writeFileSync, renameSync, rmSync, cpSync, symlinkSync } from 'node:fs'
+import { existsSync, lstatSync, readFileSync, readdirSync, readlinkSync, realpathSync, mkdirSync, writeFileSync, renameSync, rmSync, cpSync, symlinkSync } from 'node:fs'
 import { dirname, join, relative, resolve, isAbsolute } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 
 export const names = { platform: 'harness-engineering-platform', data: 'harness-engineering-platform-data', platform_manager_dsh_home: 'platform-manager-dsh-home', business_agents: 'business-agents' }
+const managerWorkspaceName = 'manager-workspace'
+const managerWorkspaceRepositories = { data: names.data, business_agents: names.business_agents }
 const version = '1.0.0'
 type Repo = { url: string, ref?: string, commit?: string }
 type Skill = { name: string, repository: string, path: string, scope: string }
@@ -90,6 +92,33 @@ function contextIssues(root: string) {
   ]
   return entries.filter(({ candidates }) => !candidates.some(path => existsSync(join(root, path)))).map(({ label }) => `缺少研发上下文：${label}`)
 }
+function managerWorkspaceIssues(root: string) {
+  const workspace = join(root, managerWorkspaceName), issues: string[] = []
+  if (!exists(workspace)) return [`缺少管理助手默认工作区：${managerWorkspaceName}/`]
+  if (lstatSync(workspace).isSymbolicLink() || !lstatSync(workspace).isDirectory()) return [`管理助手默认工作区不是普通目录：${workspace}`]
+  for (const [key, name] of Object.entries(managerWorkspaceRepositories)) {
+    const path = join(workspace, name), expected = `../${name}`
+    if (!exists(path)) { issues.push(`缺少管理助手工作区入口：${managerWorkspaceName}/${name}`); continue }
+    if (!lstatSync(path).isSymbolicLink() || readlinkSync(path) !== expected) { issues.push(`管理助手工作区入口必须指向 ${expected}：${path}`); continue }
+    try {
+      if (realpathSync(path) !== realpathSync(join(root, name))) issues.push(`管理助手工作区入口目标不匹配：${path}`)
+    } catch { issues.push(`管理助手工作区入口目标不可解析：${path}`) }
+  }
+  return issues
+}
+function ensureManagerWorkspace(root: string) {
+  const workspace = join(root, managerWorkspaceName)
+  if (exists(workspace) && (lstatSync(workspace).isSymbolicLink() || !lstatSync(workspace).isDirectory())) throw Error(`管理助手默认工作区不是普通目录：${workspace}`)
+  mkdirSync(workspace, { recursive: true })
+  for (const name of Object.values(managerWorkspaceRepositories)) {
+    const path = join(workspace, name), expected = `../${name}`
+    if (exists(path)) {
+      if (!lstatSync(path).isSymbolicLink() || readlinkSync(path) !== expected || realpathSync(path) !== realpathSync(join(root, name))) throw Error(`管理助手工作区入口已漂移：${path}`)
+      continue
+    }
+    symlinkSync(expected, path, 'dir')
+  }
+}
 export function boundaryIssues(root: string) {
   if (!exists(join(root, '.git'))) return []
   const issues: string[] = []
@@ -156,9 +185,10 @@ export function plan(root: string, mode?: 'symlink' | 'copy') {
   }
   const desired = { schema_version: 1, generator: `hep-lab-space/${version}`, workspace, repositories, skills }
   const { generated_at: _time, ...previousContent } = previous ?? {}
-  return { desired, previous, changes, conflicts, context_issues: [...contextIssues(root), ...boundaryIssues(root)], manifest_changed: !equal(desired, previousContent) }
+  return { desired, previous, changes, conflicts, context_issues: [...contextIssues(root), ...boundaryIssues(root), ...managerWorkspaceIssues(root)], manifest_changed: !equal(desired, previousContent) }
 }
 export function sync(root: string, mode?: 'symlink' | 'copy') {
+  ensureManagerWorkspace(root)
   const state = plan(root, mode)
   if (state.conflicts.length) throw Error(state.conflicts.join('\n'))
   if (state.context_issues.length) throw Error(state.context_issues.join('\n'))
@@ -177,9 +207,9 @@ export function sync(root: string, mode?: 'symlink' | 'copy') {
   const runtimePath = join(root, 'hep-lab.yaml')
   let previousRuntime: any
   try { previousRuntime = json(runtimePath) } catch { previousRuntime = null }
-  const runtime = { schema_version: 1, initializer_version: 2, created_at: previousRuntime?.created_at ?? new Date().toISOString(), repositories, paths: { dsh_home: join(root, names.platform_manager_dsh_home), business_agents_root: join(root, names.business_agents) } }
+  const runtime = { schema_version: 1, initializer_version: 2, created_at: previousRuntime?.created_at ?? new Date().toISOString(), repositories, paths: { dsh_home: join(root, names.platform_manager_dsh_home), business_agents_root: join(root, names.business_agents), manager_workspace_root: join(root, managerWorkspaceName) } }
   const runtime_changed = writeJson(runtimePath, runtime, 0o600)
-  return { command: 'sync', changed: state.manifest_changed || runtime_changed || state.changes.length > 0, changes: state.changes, repositories: state.desired.repositories }
+  return { command: 'sync', changed: state.manifest_changed || runtime_changed || state.changes.length > 0, changes: state.changes, manager_workspace_root: join(root, managerWorkspaceName), repositories: state.desired.repositories }
 }
 export function initialize(root: string, allowFloating = false, mode?: 'symlink' | 'copy') {
   const config = load(root)
@@ -213,7 +243,7 @@ export function verify(root: string) {
   const state = plan(root)
   const issues = [...state.conflicts, ...state.context_issues, ...state.changes.map(item => `Skill 投影需要同步：${item.name}`)]
   if (state.manifest_changed) issues.push('来源记录需要同步')
-  return { command: 'verify', valid: issues.length === 0, issues, repositories: state.desired.repositories, skills: state.desired.skills.map(item => item.name) }
+  return { command: 'verify', valid: issues.length === 0, issues, manager_workspace_root: join(root, managerWorkspaceName), repositories: state.desired.repositories, skills: state.desired.skills.map(item => item.name) }
 }
 async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: { root: { type: 'string' }, mode: { type: 'string' }, fast: { type: 'boolean' }, 'allow-floating-ref': { type: 'boolean' }, help: { type: 'boolean' } } })

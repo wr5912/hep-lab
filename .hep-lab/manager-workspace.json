@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "root": "manager-workspace",
+  "mode": "symlink",
+  "repositories": {
+    "data": {
+      "path": "harness-engineering-platform-data",
+      "target": "../harness-engineering-platform-data"
+    },
+    "business_agents": {
+      "path": "business-agents",
+      "target": "../business-agents"
+    }
+  },
+  "purpose": "平台管理助手默认业务入口；真实 Git 工作树保持独立"
+}
