@@ -11,9 +11,9 @@
 | 仓库更新工具 | `tools/hep-lab-repos show --json` 展示五个仓库的 remote、分支、提交和 dirty 状态；本地 `business-agents` 保留 GitHub `origin`，补充匹配来源清单的 `gitlab` remote；`pull` 使用 `fetch --prune` 与 `merge --ff-only`，不切换或重置工作树。 |
 | 真实工作区初始化 | `tools/hep-lab-space init` 完成；3 个已有子仓提交与 `.hep-lab/sources.json` 锁定提交不同，工具保留现有工作树并给出警告，没有覆盖或切换。 |
 | 真实上下文与边界 | `tools/hep-lab-space verify --fast`、`doctor` 均通过；根仓没有 gitlink、`.gitmodules` 或子仓文件入索引，四个子仓均 clean。business-agents 仅增加本地 `gitlab` remote 配置，未修改工作树或子仓提交。 |
-| 当前整改验证 | 平台 `platform/hep`、Agent CLI help、MCP catalog/show/validate 与 clean archive `dsh-deploy --help` 通过；业务 child guard 2/2、业务资产校验 22/22、MCP 当前清单 2/2；本地 Mock MCP 完成 discovery/tools/list/tool call，远端独立包完成 status、checksum、修改资产重启回读。平台完整启动受远端 Node/磁盘与数据初始化条件限制。 |
+| 当前整改验证 | 平台 `platform/hep`、Agent CLI help、MCP catalog/show/validate 与 clean archive `dsh-deploy --help` 通过；业务 child guard 2/2、业务资产校验 22/22、MCP 当前清单 2/2；业务当前 `evaluation.md` 已迁入 business-agents，平台评测读取、固定来源物化和跨仓 Run provenance 定向回归通过；本地 Mock MCP 完成 discovery/tools/list/tool call，远端独立包完成 status、checksum、修改资产重启回读。平台完整启动受远端 Node/磁盘与数据初始化条件限制。 |
 
-本轮整改提交为：platform `29bf15ed9d6753f14507a5fc81bc9daad1618d79`，data `df82ddddb7b5bd5161af319cd651ecf7c1839e3c`，platform-manager-dsh-home `df7d9b89b0bc8da60a68ffa21938740fdf3f85d2`，business-agents `21484bc464525b840d3b8775a0074fb489d58e61`；四个提交均已推送各自 `origin/main`。
+本轮整改提交为：platform `41b7a15219796b7a5021b2f395a17d9bc6f52000`，data `6ec9c29e39a620111124532bcb8e6aeb794a392b`，platform-manager-dsh-home `2271e5afa7052ec1cbfcc841c3e1b6a95b2320f6`，business-agents `1f7743aacd34b9f48d12583f8fe9ca99606ffd96`；四个提交均已推送各自 `origin/main`。新增 `config/assistant-workspace.json` 固定 data + business-agents 业务范围，平台 context/status 返回该范围并拒绝程序仓和管理 HOME 作为业务目标；平台工作区定向测试 5/5 通过，TypeScript 检查通过。
 
 ## /home/luopeng/hep-lab 验收记录
 
