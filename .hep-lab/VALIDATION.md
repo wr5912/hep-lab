@@ -8,9 +8,9 @@
 | --- | --- |
 | 管理 HOME 上下文 | `tools/hep-lab-space` 优先使用本地 `AGENTS.override.md`；缺失时使用版本化 `README.md`。 |
 | 工作区单测 | `node --test tools/test/*.test.mjs`：17 项通过，覆盖管理 HOME 冷启动、来源远端名称和仓库更新工具的展示、快进、dirty 与 detached 保护；`git diff --check` 通过。 |
-| 仓库更新工具 | `tools/hep-lab-repos show --json` 展示五个仓库的 remote、分支、提交和 dirty 状态，并报告当前 `business-agents` 本地远端与最新来源清单不匹配；`pull` 使用 `fetch --prune` 与 `merge --ff-only`，支持匹配非 `origin` 的远端名称，不切换或重置工作树。 |
+| 仓库更新工具 | `tools/hep-lab-repos show --json` 展示五个仓库的 remote、分支、提交和 dirty 状态；本地 `business-agents` 保留 GitHub `origin`，补充匹配来源清单的 `gitlab` remote；`pull` 使用 `fetch --prune` 与 `merge --ff-only`，不切换或重置工作树。 |
 | 真实工作区初始化 | `tools/hep-lab-space init` 完成；3 个已有子仓提交与 `.hep-lab/sources.json` 锁定提交不同，工具保留现有工作树并给出警告，没有覆盖或切换。 |
-| 真实上下文与边界 | 根仓没有 gitlink、`.gitmodules` 或子仓文件入索引；四个子仓均 clean。当前 `verify --fast`/`doctor` 因 `business-agents` 本地 remote 仍是 GitHub、最新来源清单已切换为内部 GitLab 而报告来源漂移，未修改该子仓。 |
+| 真实上下文与边界 | `tools/hep-lab-space verify --fast`、`doctor` 均通过；根仓没有 gitlink、`.gitmodules` 或子仓文件入索引，四个子仓均 clean。business-agents 仅增加本地 `gitlab` remote 配置，未修改工作树或子仓提交。 |
 | 业务与平台效果 | 本次没有重新启动平台、执行真实业务 Run、浏览器验收或外部服务测试；这些层次仍以对应程序仓验收矩阵为准。 |
 
 该工作区验收时子仓提交为：platform `c87b5d47906953cfdaaac199e5274d546a45ba02`，data `34e0250ce621fde03777b70d9c852b2bf8e7efd7`，platform-manager-dsh-home `bde8e558fb54d48adbcb6e66554d0da8d4b0b895`，business-agents `3fe1f553b4e08162e12ed77b3faa09a7b0e1e53f`。data、platform-manager-dsh-home 和 business-agents 的本地提交没有写回来源锁定；如需升级锁定版本，应先在各子仓确认可从远端干净检出，再单独更新 `.hep-lab/sources.json`。
