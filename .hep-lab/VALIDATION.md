@@ -2,7 +2,7 @@
 
 ## /home/admin/work/hep-lab 验收记录
 
-2026-11-13，在 `/home/admin/work/hep-lab` 的真实控制仓及四个既有独立子仓执行。控制仓来源为 `git@github.com:wr5912/hep-lab.git`，分支为 `main`。
+2026-11-13，在 `/home/admin/work/hep-lab` 的真实控制仓及四个独立子仓执行。控制仓来源为 `git@github.com:wr5912/hep-lab.git`，分支为 `main`。当前四仓程序提交以 `.hep-lab/sources.json` 为准。
 
 | 范围 | 执行与结果 |
 | --- | --- |
@@ -11,9 +11,9 @@
 | 仓库更新工具 | `tools/hep-lab-repos show --json` 展示五个仓库的 remote、分支、提交和 dirty 状态；本地 `business-agents` 保留 GitHub `origin`，补充匹配来源清单的 `gitlab` remote；`pull` 使用 `fetch --prune` 与 `merge --ff-only`，不切换或重置工作树。 |
 | 真实工作区初始化 | `tools/hep-lab-space init` 完成；3 个已有子仓提交与 `.hep-lab/sources.json` 锁定提交不同，工具保留现有工作树并给出警告，没有覆盖或切换。 |
 | 真实上下文与边界 | `tools/hep-lab-space verify --fast`、`doctor` 均通过；根仓没有 gitlink、`.gitmodules` 或子仓文件入索引，四个子仓均 clean。business-agents 仅增加本地 `gitlab` remote 配置，未修改工作树或子仓提交。 |
-| 业务与平台效果 | 本次没有重新启动平台、执行真实业务 Run、浏览器验收或外部服务测试；这些层次仍以对应程序仓验收矩阵为准。 |
+| 当前整改验证 | 平台 `platform/hep` 与 clean archive `dsh-deploy --help` 通过；业务 child guard 2/2、业务资产校验 22/22、MCP 当前清单 2/2；本地 Mock MCP 健康检查和远端 SSH/Docker 可用性已核对。平台/独立业务包远端安装与真实业务 Run 仍在本轮后续验收中。 |
 
-该工作区验收时子仓提交为：platform `c87b5d47906953cfdaaac199e5274d546a45ba02`，data `34e0250ce621fde03777b70d9c852b2bf8e7efd7`，platform-manager-dsh-home `bde8e558fb54d48adbcb6e66554d0da8d4b0b895`，business-agents `3fe1f553b4e08162e12ed77b3faa09a7b0e1e53f`。data、platform-manager-dsh-home 和 business-agents 的本地提交没有写回来源锁定；如需升级锁定版本，应先在各子仓确认可从远端干净检出，再单独更新 `.hep-lab/sources.json`。
+本轮整改提交为：platform `81dc1ba830f70a7f3a827cb04e64b33d3f4b30cb`，data `ff180f78eb892b4e24ab1174b5561a2f0abfcc2d`，platform-manager-dsh-home `ff3390707c11084e3c3e5836ed4fdab512190663`，business-agents `21484bc464525b840d3b8775a0074fb489d58e61`；四个提交均已推送各自 `origin/main`。
 
 ## /home/luopeng/hep-lab 验收记录
 
