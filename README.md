@@ -1,6 +1,6 @@
 # hep-lab
 
-四仓开发工作区。仓库职责和协作入口见 [AGENTS.md](AGENTS.md)。需要 Node.js 24.3 或更新版本和 Git，无平台依赖安装要求。
+四仓开发工作区。仓库职责和协作入口见 [AGENTS.md](AGENTS.md)。工作区工具需要 Node.js 22.18 及以上版本和 Git，无需 Python 或平台依赖。Node.js 22.18 起默认支持直接运行 TypeScript；完整平台的环境要求见[程序仓说明](https://github.com/wr5912/harness-engineering-platform/blob/main/README.md#快速启动)。
 
 ```sh
 git clone https://github.com/wr5912/hep-lab.git
@@ -27,6 +27,6 @@ node --test tools/test/*.test.mjs
 
 根仓只管理工作区入口、来源清单和共享开发 Skill。四个子目录是独立克隆，均由根仓 `.gitignore` 排除；根仓不记录子仓文件、gitlink 或 `.gitmodules`。根仓 `git status` 只显示控制文件，聚合状态使用 `status`。`verify` 只检查固定四仓的忽略项和索引边界，不扫描子仓内容。
 
-开发 Skill 使用 Codex 的 [AGENTS.md 发现规则](https://learn.chatgpt.com/docs/agent-configuration/agents-md)和[原生 Skill 发现规则](https://learn.chatgpt.com/docs/build-skills)。管理助手的运行技能由 DSH HOME 原生发现，不投影到开发工作区。完整平台运行检查和业务效果验收见程序仓 [README.md](harness-engineering-platform/README.md) 与项目验收矩阵。
+开发 Skill 使用 Codex 的 [AGENTS.md 发现规则](https://learn.chatgpt.com/docs/agent-configuration/agents-md)和[原生 Skill 发现规则](https://learn.chatgpt.com/docs/build-skills)。管理助手的运行技能由 DSH HOME 原生发现，不投影到开发工作区。完整平台运行检查和业务效果验收见程序仓 [README.md](https://github.com/wr5912/harness-engineering-platform/blob/main/README.md) 与项目验收矩阵。
 
 工作区工具、原生上下文和技能发现的当前验证范围见[工作区验收](.hep-lab/VALIDATION.md)。
