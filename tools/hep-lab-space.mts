@@ -76,8 +76,13 @@ function repositoryStates(root: string, config: Config) {
   }))
 }
 function contextIssues(root: string) {
-  const entries = ['AGENTS.md', ...Object.entries(names).map(([key, name]) => `${name}/${key === 'platform_manager_dsh_home' ? 'AGENTS.override.md' : 'AGENTS.md'}`)]
-  return entries.filter(path => !existsSync(join(root, path))).map(path => `缺少研发上下文：${path}`)
+  const entries = [
+    { label: 'AGENTS.md', candidates: ['AGENTS.md'] },
+    ...Object.entries(names).map(([key, name]) => key === 'platform_manager_dsh_home'
+      ? { label: `${name}/AGENTS.override.md`, candidates: [`${name}/AGENTS.override.md`, `${name}/README.md`] }
+      : { label: `${name}/AGENTS.md`, candidates: [`${name}/AGENTS.md`] }),
+  ]
+  return entries.filter(({ candidates }) => !candidates.some(path => existsSync(join(root, path)))).map(({ label }) => `缺少研发上下文：${label}`)
 }
 export function boundaryIssues(root: string) {
   if (!exists(join(root, '.git'))) return []

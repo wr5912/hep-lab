@@ -9,7 +9,7 @@
 | platform-manager-dsh-home | 管理助手原生 DSH HOME：身份、Skill、Preset、Profile 及 MCP 使用与开发方法 |
 | business-agents | 业务智能体原生 Harness 文件，含各自 DSH MCP 配置 |
 
-进入子仓先读其研发指引；Git 仓库边界会影响 Codex 的上下文发现，不能假设从子仓启动时自动继承本文件。管理助手仓根 `AGENTS.md` 是运行身份，研发协作读 `AGENTS.override.md`。阅读业务指令不代表切换开发身份。
+进入子仓先读其研发指引；Git 仓库边界会影响 Codex 的上下文发现，不能假设从子仓启动时自动继承本文件。管理助手 HOME 若提供 `AGENTS.override.md`，它用于研发协作；全新检出没有该本地覆盖文件时，以该仓库的 `README.md` 和本文件的工作区边界为准。阅读业务指令不代表切换开发身份。
 
 先定位唯一事实源，再修改实现和直接消费者。管理及业务 Harness 保持文件形式，不存数据库；业务资产位于 `agents/<id>/`，不添加多余包装层或逐智能体研发说明。复用 DSH 原生装载与执行能力。
 

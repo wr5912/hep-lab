@@ -10,7 +10,7 @@ tools/hep-lab-space diff
 tools/hep-lab-space verify --fast
 ```
 
-`init` 按 [.hep-lab/sources.json](.hep-lab/sources.json) 的提交准备缺失的四仓，复用现有仓库但不切换、清理或覆盖工作树。已有提交与配置不同会给出提示并保留当前版本；需要更新时由开发者在对应仓执行 Git 操作。`sync` 在当前四仓版本上更新上下文投影，记录实际提交及 dirty 状态，不拉取代码。源地址兼容 GitHub SSH/HTTPS 表示。
+`init` 按 [.hep-lab/sources.json](.hep-lab/sources.json) 的提交准备缺失的四仓，复用现有仓库但不切换、清理或覆盖工作树。已有提交与配置不同会给出提示并保留当前版本；需要更新时由开发者在对应仓执行 Git 操作。`sync` 在当前四仓版本上更新上下文投影，记录实际提交及 dirty 状态，不拉取代码。管理 HOME 的研发覆盖文件是可选的；没有该本地文件时使用其版本化 `README.md` 作为仓库上下文。源地址兼容 GitHub SSH/HTTPS 表示。
 
 ```sh
 tools/hep-lab-space sync                 # 首次默认相对符号链接，之后沿用当前模式

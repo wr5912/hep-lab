@@ -42,6 +42,15 @@ test('首次克隆固定提交，真实包资源与可执行权限可达；重�
   assert.equal(verify(f.root).valid, true)
   assert.equal(readFileSync(join(f.root, names.platform_manager_dsh_home, 'AGENTS.md'), 'utf8'), 'runtime identity\n')
 })
+test('管理 HOME 没有本地研发覆盖文件时，版本化 README 仍可完成冷启动上下文检查', t => {
+  const f = fixture(t)
+  initialize(f.root)
+  rmSync(join(f.root, names.platform_manager_dsh_home, 'AGENTS.md'))
+  rmSync(join(f.root, names.platform_manager_dsh_home, 'AGENTS.override.md'))
+  writeFileSync(join(f.root, names.platform_manager_dsh_home, 'README.md'), 'platform manager home\n')
+  assert.equal(initialize(f.root).warnings.length, 0)
+  assert.equal(verify(f.root).valid, true)
+})
 test('复制整个包、保留脚本权限；源变化显示漂移且支持复制和链接双向切换', t => {
   const f = fixture(t); initialize(f.root); sync(f.root, 'copy')
   assert.equal(lstatSync(f.target).isDirectory(), true)
