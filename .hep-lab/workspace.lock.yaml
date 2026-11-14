@@ -17,7 +17,7 @@
       "path": "manager-workspace/harness-engineering-platform-data",
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
       "ref": "main",
-      "commit": "8ba2c0b68882672d9d06ead452adcd56caa30322"
+      "commit": "84d93869b5a809bcbb6cd6a30575ecd557772c01"
     },
     "platform_manager_dsh_home": {
       "path": "platform-manager-dsh-home",
