@@ -6,4 +6,6 @@
 /.agents/skills/
 /.hep-lab/manifest.json
 /.hep-lab/evidence/
+/.hep-lab/state/
+/.hep-lab/releases/
 *.tmp

@@ -5,6 +5,7 @@ import { dirname, join, relative, resolve, isAbsolute } from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
+import { applyWorkspaceLock } from './workspace-lock.mts'
 
 export const names = { platform: 'harness-engineering-platform', data: 'harness-engineering-platform-data', platform_manager_dsh_home: 'platform-manager-dsh-home', business_agents: 'business-agents' }
 const managerWorkspaceName = 'manager-workspace'
@@ -90,8 +91,8 @@ function writeJson(path: string, value: unknown, mode = 0o644) {
   writeFileSync(temporary, content, { mode }); renameSync(temporary, path)
   return true
 }
-function load(root: string): Config {
-  const config = json(join(root, '.hep-lab/sources.json')) as Config
+export function loadSources(root: string): Config {
+  const config = applyWorkspaceLock(root, json(join(root, '.hep-lab/sources.json')) as Config)
   if (config.schema_version !== 1 || !['symlink', 'copy'].includes(config.mode) || !Array.isArray(config.skills)) throw Error('工作区来源清单版本或格式无效')
   for (const key of Object.keys(names)) if (!config.repositories[key]?.url) throw Error(`缺少仓库来源：${key}`)
   const seen = new Set<string>()
@@ -103,6 +104,7 @@ function load(root: string): Config {
   }
   return config
 }
+const load = loadSources
 function repositoryStates(root: string, config: Config) {
   return Object.fromEntries(Object.entries(repositoryPaths).map(([key, name]) => {
     const path = join(root, name)

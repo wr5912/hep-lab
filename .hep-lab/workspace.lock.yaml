@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "repositories": {
+    "workspace": {
+      "path": ".",
+      "url": "https://github.com/wr5912/hep-lab.git",
+      "ref": "main",
+      "commit": "7196c7290a47b42c3f0edaeb2a1775b49bab3c0d"
+    },
+    "platform": {
+      "path": "harness-engineering-platform",
+      "url": "git@github.com:wr5912/harness-engineering-platform.git",
+      "ref": "main",
+      "commit": "8029066ad5e0fb20419a339d1a56b501c8ecee4e"
+    },
+    "data": {
+      "path": "manager-workspace/harness-engineering-platform-data",
+      "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
+      "ref": "main",
+      "commit": "8c3585f60f1851d2e7bf9d7a98d896805eebc39b"
+    },
+    "platform_manager_dsh_home": {
+      "path": "platform-manager-dsh-home",
+      "url": "git@github.com:wr5912/platform-manager-dsh-home.git",
+      "ref": "main",
+      "commit": "d3dcf01b79e6406359df8f36f6ab6a2a1e71a1db"
+    },
+    "business_agents": {
+      "path": "manager-workspace/business-agents",
+      "url": "http://172.16.138.233/ai-soc/business-agents.git",
+      "ref": "main",
+      "commit": "cfe0e3b151c2e2843db0df79ffe2932c0af599ca"
+    }
+  },
+  "controlCommit": "base; release snapshot records exact HEAD",
+  "environment": "lab",
+  "arch": "arm64",
+  "image": {
+    "tag": "ai-agent-harness/dsh:ddac96760-arm64-96aad5cc767f",
+    "fingerprint": "sha256:96aad5cc767f578232b8623826d20f558691dff4f57d327f2d8a2d0c6914fa2e",
+    "id": "sha256:aac7e2fdae6a871687adf7f4213796ab164f733035eedc8037afd1b85869a121",
+    "arch": "arm64"
+  },
+  "runtime": {
+    "ref": "program:runtime/adapters/dsh-container/source.lock.json",
+    "sha256": "c3c9f1923aeef20b261020a02681942ac9fb247fc8919cd179c8dc8e745f9571"
+  },
+  "config": {
+    "path": "manager-workspace/harness-engineering-platform-data/config/deployment.yaml",
+    "sha256": "73bd2e5dc3b79b827fec143fc15d34dd1664fb0df8abd5310563b2c8c6add8db",
+    "references": [
+      {
+        "name": "businessModel",
+        "ref": "data:config/business-model-default.json",
+        "sha256": "bb336f1a83476af76c5755eddf94ebd3d8cd3064041a963f9cf00c5834675562"
+      },
+      {
+        "name": "businessAccess",
+        "ref": "data:config/business-access.json",
+        "sha256": "bc45ed64541940650d217848824bc4336e4c0cb5282b83061d0851823e406fe8"
+      },
+      {
+        "name": "repositories",
+        "ref": "data:config/repositories.json",
+        "sha256": "7a55cafc8f5e6fd8ce3ff18dc8a7cadf02c543ca7567d6e59b8d274508a191b1"
+      },
+      {
+        "name": "managerProfile",
+        "ref": "home:profiles/harness-platform/cordis.patch.yml",
+        "sha256": "4e6419a22552a0db3d4d93b5aff6f25027ad933edf1eef7f475d19e118d018ec"
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+tools_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+case "${1:-help}" in
+  package|lock) exec node "$tools_dir/package.mts" "$@" ;;
+  status|pull) exec "$tools_dir/hep-lab-repos" "$@" ;;
+  init|sync|diff|verify|doctor) exec "$tools_dir/hep-lab-space" "$@" ;;
+  *) exec node "$tools_dir/package.mts" --help ;;
+esac

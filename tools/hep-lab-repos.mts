@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { names, repositoryPaths, sourceRemotes, configureCommitIdentity, type Repo } from './hep-lab-space.mts'
+import { applyWorkspaceLock } from './workspace-lock.mts'
 
 type RepoConfig = Repo
 type Config = { repositories: Record<string, RepoConfig> }
@@ -19,7 +20,7 @@ const commandGit = (path: string, args: string[]) => execFileSync(
 function readConfig(root: string): Config {
   const path = join(root, '.hep-lab/sources.json')
   if (!existsSync(path)) throw Error(`缺少来源清单：${path}`)
-  const config = JSON.parse(readFileSync(path, 'utf8')) as Config
+  const config = applyWorkspaceLock(root, JSON.parse(readFileSync(path, 'utf8')))
   for (const key of Object.keys(names)) if (!config.repositories?.[key]?.url) throw Error(`来源清单缺少仓库：${key}`)
   return config
 }

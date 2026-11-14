@@ -10,7 +10,7 @@ tools/hep-lab-space diff
 tools/hep-lab-space verify --fast
 ```
 
-`init` 按 [.hep-lab/sources.json](.hep-lab/sources.json) 的提交准备缺失的四个子仓，复用现有仓库但不切换、清理或覆盖工作树。已有提交与配置不同会给出提示并保留当前版本；需要更新时由开发者在对应仓执行 Git 操作。`sync` 在当前五仓版本上更新上下文投影，记录实际提交及 dirty 状态，不拉取代码。已有仓库按来源地址匹配远端，支持 `gitlab` 等名称；GitHub SSH/HTTPS 表示视为同一来源。
+`init` 按 [.hep-lab/sources.json](.hep-lab/sources.json) 的地址和 [workspace.lock.yaml](.hep-lab/workspace.lock.yaml) 的提交准备缺失的四个子仓，复用现有仓库但不切换、清理或覆盖工作树。已有提交与配置不同会给出提示并保留当前版本；需要更新时由开发者在对应仓执行 Git 操作。`sync` 在当前五仓版本上更新上下文投影，记录实际提交及 dirty 状态，不拉取代码。已有仓库按来源地址匹配远端，支持 `gitlab` 等名称；GitHub SSH/HTTPS 表示视为同一来源。
 
 `business-agents` 同时登记 GitHub `url` 和 GitLab `internal_url`。本机存在非回环的 `172.16.*.*` IPv4 地址时，初始化和拉取优先使用 GitLab；其他环境优先使用 GitHub。优先来源连接失败时尝试另一端，保留现有远端名称。两端使用同一份 Harness 和固定提交，合并后的内容保持同步。
 
@@ -59,6 +59,21 @@ tools/hep-lab-repos pull --dry-run
 `.hep-lab/manifest.json` 记录来源提交、工作树状态、包摘要和物化方式。`hep-lab.yaml` 保持平台运行入口兼容；这些本地结果均不提交。重复同步无变化时不改写文件。`--root <目录>` 可指定已包含本仓上下文源码与配置的工作区；命令从任意 cwd 启动都默认使用脚本所属工作区。
 
 根仓只管理工作区入口、来源清单和共享开发 Skill。四个子仓目录是独立克隆，均由根仓 `.gitignore` 排除；根仓不记录子仓文件、gitlink 或 `.gitmodules`。根仓 `git status` 只显示控制文件，聚合状态使用 `status`。`verify` 校验五仓来源锁、工作树和索引边界，不读取业务运行数据。
+
+统一打包从控制仓发起；环境定义唯一位于数据仓 `config/deployment.yaml`，由程序仓解析。先准备对应架构的离线资源并提交子仓改动，再锁定和提交控制仓：
+
+```sh
+./tools/hep-lab lock --environment lab
+git add .hep-lab/workspace.lock.yaml
+git commit
+./tools/hep-lab package --environment lab --agent security-operations-expert --kind all --dry-run
+./tools/hep-lab package --environment lab --agent security-operations-expert --kind all \
+  --output .hep-lab/releases/arm64-lab-001
+```
+
+`--kind platform|agent|all` 选择平台包、独立包或两者；仅指定 `--agent` 时默认为独立包。入口检查五仓工作树和锁，委托程序仓 `platform/dsh-deploy` 打包，不实现另一套运行时。`status`、`init`、`sync`、`verify`、`doctor` 也可经 `./tools/hep-lab` 调用。
+
+锁文件记录五仓、标准镜像 ID 与构建指纹、Runtime 锁摘要及配置文件摘要。控制仓自身记录生成锁时的基线提交，发布目录的锁记录实际五仓 HEAD，避免提交哈希自引用。生成锁使用 JSON 兼容 YAML，工作区引导不额外安装解析器。发布目录包含 `release.manifest.yaml`、`workspace.lock.yaml`、`config.snapshot.json`、`platform-bundle/`、`agent-bundles/`、`evidence/` 和 `logs/`；配置快照仅记录来源引用和摘要，原生配置由平台打包器装配。失败记录也保留在该发布目录。全部发布产物本地忽略，不能提交或公开含现场配置的安装包。
 
 开发 Skill 使用 Codex 的 [AGENTS.md 发现规则](https://learn.chatgpt.com/docs/agent-configuration/agents-md)和[原生 Skill 发现规则](https://learn.chatgpt.com/docs/build-skills)。管理助手的运行技能由 DSH HOME 原生发现，不投影到开发工作区。完整平台运行检查和业务效果验收见程序仓 [README.md](https://github.com/wr5912/harness-engineering-platform/blob/main/README.md) 与项目验收矩阵。
 
