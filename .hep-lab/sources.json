@@ -10,7 +10,7 @@
     "data": {
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
       "ref": "main",
-      "commit": "e9585d89efd1aa57d69f36c5053d333db6e53cbf"
+      "commit": "7f878d1ec85347727404f5781e9ae767dcce7df4"
     },
     "platform_manager_dsh_home": {
       "url": "git@github.com:wr5912/platform-manager-dsh-home.git",
