@@ -5,7 +5,7 @@
       "path": ".",
       "url": "https://github.com/wr5912/hep-lab.git",
       "ref": "main",
-      "commit": "7196c7290a47b42c3f0edaeb2a1775b49bab3c0d"
+      "commit": "a99afc47bbdc2b7bc657902b34007359a34f9a2e"
     },
     "platform": {
       "path": "harness-engineering-platform",
@@ -17,7 +17,7 @@
       "path": "manager-workspace/harness-engineering-platform-data",
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
       "ref": "main",
-      "commit": "8c3585f60f1851d2e7bf9d7a98d896805eebc39b"
+      "commit": "907705e9eea5f8df68e3bc01fbfbcf2e672ed938"
     },
     "platform_manager_dsh_home": {
       "path": "platform-manager-dsh-home",
@@ -57,7 +57,7 @@
       {
         "name": "businessAccess",
         "ref": "data:config/business-access.json",
-        "sha256": "bc45ed64541940650d217848824bc4336e4c0cb5282b83061d0851823e406fe8"
+        "sha256": "d143d93078e1b24da49213776c267021ed9e6978434f373e405ee2ea49666e5a"
       },
       {
         "name": "repositories",
