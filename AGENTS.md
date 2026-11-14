@@ -16,4 +16,6 @@
 
 工作区入口为 `tools/hep-lab-space`：`init` 准备四仓，`sync` 物化允许的共享 Skill，`diff` 查看漂移，`verify --fast` 核对上下文，`doctor` 定位环境问题。共享 Skill 源码位于 `skills/`，清单位于 `.hep-lab/sources.json`；生成的 `.agents/skills/` 不直接编辑。平台完整运行检查仍用程序仓的 `platform/hep-lab doctor`。
 
+`./tools/hep-lab-repos status` 一次查看控制仓和四个子仓的本地 Git 状态；`--json` 输出结构化结果。`pull` 更新五仓，`pull --dry-run` 预览更新。
+
 已授权的工作连续完成。验证受影响的实际路径，区分静态检查、模拟、真实模型和外部系统结果；不把临时测试副本称为真实仓库修复。只在当前功能需要时增加检查，不引入审批或生产治理框架。提交前核对各仓 diff；推送按用户授权执行。

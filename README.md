@@ -38,11 +38,14 @@ tools/hep-lab-space status               # 聚合控制仓与四仓的分支、�
 node --test tools/test/*.test.mjs
 ```
 
-展示控制仓及四个子仓的远程地址和当前提交：
+一次查看工作区控制仓及四个子仓（共五仓）的 Git 状态，包括路径、远端、分支、当前提交及是否有未提交改动：
 
 ```sh
-tools/hep-lab-repos show
+./tools/hep-lab-repos status
+./tools/hep-lab-repos status --json
 ```
+
+不指定子命令时默认执行 `status`；`show` 保留为兼容别名。状态查询只读取本地 Git 信息，不拉取远端。
 
 拉取五个仓库的最新 `main` 代码时，工具先尝试安全更新控制仓，再逐一对 clean 且已位于目标分支的工作树执行快进更新；控制仓或子仓存在未提交改动、detached HEAD 或其他分支时会保留工作树并报告未更新对象：
 

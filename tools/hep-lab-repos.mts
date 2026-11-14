@@ -123,14 +123,14 @@ function main() {
     allowPositionals: true,
     options: { root: { type: 'string' }, json: { type: 'boolean' }, 'dry-run': { type: 'boolean' }, help: { type: 'boolean' } },
   })
-  const command = positionals[0] ?? 'show'
+  const command = positionals[0] ?? 'status'
   if (values.help || command === 'help') {
-    console.log('hep-lab-repos show|pull [--root PATH] [--json] [--dry-run]')
+    console.log('hep-lab-repos status|show|pull [--root PATH] [--json] [--dry-run]')
     return
   }
-  if (positionals.length > 1 || !['show', 'pull'].includes(command)) throw Error('未知命令，使用 show 或 pull')
+  if (positionals.length > 1 || !['status', 'show', 'pull'].includes(command)) throw Error('未知命令，使用 status、show 或 pull')
   const root = resolve(values.root ?? join(dirname(fileURLToPath(import.meta.url)), '..'))
-  if (command === 'show') {
+  if (command === 'status' || command === 'show') {
     const result = listRepositories(root)
     if (values.json) console.log(JSON.stringify(result, null, 2))
     else result.forEach(printState)
