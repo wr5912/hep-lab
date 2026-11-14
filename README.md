@@ -51,8 +51,6 @@ tools/hep-lab-repos pull
 tools/hep-lab-repos pull --dry-run
 ```
 
-`business-agents` 的两个已知镜像按本机网络选择传输地址：真实网卡具有 `172.16.*` IPv4 时优先 GitLab `http://172.16.138.233/ai-soc/business-agents.git`，其他环境优先 GitHub `git@github.com:wr5912/business-agents.git`；容器网桥不参与判断，首选 clone/fetch 失败才尝试另一端。初始化保留已有 `origin` 并补齐镜像远端；快进失败直接报告分歧。`show`、`sync` 不联网，`remote`、`transport_url` 展示首选传输，`init` 的 `cloned_from` 与 `pull` 回执记录实际成功端点；来源清单、提交锁以及生成 `hep-lab.yaml` 的登记 URL 保持原值，自定义来源维持单来源。
-
 只投影清单显式列出的 Skill；整个包连同 references、scripts、assets 一起处理。目标被手工修改时停止覆盖并显示路径，先保存改动或移到唯一来源。删除清单项会移除未经修改的旧投影；新增未管理文件保持原样并提示。两种模式都不复制运行时凭据、HOME 或会话。
 
 `.hep-lab/manifest.json` 记录来源提交、工作树状态、包摘要和物化方式。`hep-lab.yaml` 保持平台运行入口兼容；这些本地结果均不提交。重复同步无变化时不改写文件。`--root <目录>` 可指定已包含本仓上下文源码与配置的工作区；命令从任意 cwd 启动都默认使用脚本所属工作区。
