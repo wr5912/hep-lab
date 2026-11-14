@@ -8,7 +8,7 @@ import { names, repositoryPaths, sourceRemotes, configureCommitIdentity, type Re
 type RepoConfig = Repo
 type Config = { repositories: Record<string, RepoConfig> }
 type Repository = { key: string, name: string, path: string, url: string, internal_url?: string, ref: string | null, remote?: string, configuredCommit?: string }
-type RepositoryState = Repository & { branch: string | null, commit: string | null, dirty: boolean, error?: string }
+type RepositoryState = Repository & { branch: string | null, commit: string | null, dirty: boolean, upstreamCommit?: string | null, error?: string }
 
 const commandGit = (path: string, args: string[]) => execFileSync(
   'git',
@@ -54,7 +54,9 @@ function inspect(repository: Repository): RepositoryState {
     const source = repository.remote ? { remote: repository.remote, url: commandGit(repository.path, ['remote', 'get-url', repository.remote]) } : matchingRemote(repository)
     let branch: string | null = null
     try { branch = commandGit(repository.path, ['symbolic-ref', '--quiet', '--short', 'HEAD']) || null } catch {}
-    return { ...repository, ...source, branch, commit: commandGit(repository.path, ['rev-parse', 'HEAD']), dirty: Boolean(commandGit(repository.path, ['status', '--porcelain'])) }
+    let upstreamCommit: string | null = null
+    try { upstreamCommit = commandGit(repository.path, ['rev-parse', '--verify', `${source.remote}/${repository.ref ?? branch ?? 'main'}`]) || null } catch {}
+    return { ...repository, ...source, branch, commit: commandGit(repository.path, ['rev-parse', 'HEAD']), dirty: Boolean(commandGit(repository.path, ['status', '--porcelain'])), upstreamCommit }
   } catch (error) {
     return { ...repository, branch: null, commit: null, dirty: false, error: (error as Error).message }
   }
@@ -86,9 +88,11 @@ function pullOne(repository: Repository, dryRun: boolean) {
     }
     if (!fetched) throw lastError
     // 已连通来源发生分歧时直接报告，不通过切换镜像掩盖非快进冲突。
+    const fetchedCommit = commandGit(repository.path, ['rev-parse', '--verify', 'FETCH_HEAD'])
     commandGit(repository.path, ['merge', '--ff-only', 'FETCH_HEAD'])
     const next = inspect(repository)
-    return { ...next, url: fetched.url, remote: fetched.remote ?? undefined, action: 'pulled', message: `已从 ${fetched.remote ?? fetched.url} 快进到 ${next.commit}`, ok: true }
+    if (next.commit !== fetchedCommit) throw Error(`拉取后提交校验失败：期望 ${fetchedCommit}，实际 ${next.commit}`)
+    return { ...next, url: fetched.url, remote: fetched.remote ?? undefined, action: 'pulled', target_commit: fetchedCommit, message: `已从 ${fetched.remote ?? fetched.url} 快进到 ${next.commit}`, ok: true }
   } catch (error) {
     const next = inspect(repository)
     return { ...next, action: 'error', message: (error as Error).message, ok: false }
@@ -113,6 +117,7 @@ function printState(state: RepositoryState) {
   if (state.remote) console.log(`  remote_name: ${state.remote}`)
   console.log(`  branch: ${state.branch ?? 'detached/missing'}`)
   console.log(`  commit: ${state.commit ?? 'unknown'}`)
+  if (state.upstreamCommit) console.log(`  upstream_commit: ${state.upstreamCommit}`)
   console.log(`  dirty: ${state.dirty ? 'yes' : 'no'}`)
   if (state.configuredCommit && state.configuredCommit !== state.commit) console.log(`  configured_commit: ${state.configuredCommit}`)
   if (state.error) console.log(`  error: ${state.error}`)

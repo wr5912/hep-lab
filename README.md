@@ -1,6 +1,6 @@
 # hep-lab
 
-四仓开发工作区。仓库职责和协作入口见 [AGENTS.md](AGENTS.md)。各仓统一使用 Node.js 24.9+、Python 3.10+。工作区工具只需要 Node.js 和 Git；完整平台的环境要求见[程序仓说明](https://github.com/wr5912/harness-engineering-platform/blob/main/README.md#快速启动)。
+五仓开发工作区（控制仓 + 四个子仓）。仓库职责和协作入口见 [AGENTS.md](AGENTS.md)。各仓统一使用 Node.js 24.9+、Python 3.10+。工作区工具只需要 Node.js 和 Git；完整平台的环境要求见[程序仓说明](https://github.com/wr5912/harness-engineering-platform/blob/main/README.md#快速启动)。
 
 ```sh
 git clone https://github.com/wr5912/hep-lab.git
@@ -10,7 +10,7 @@ tools/hep-lab-space diff
 tools/hep-lab-space verify --fast
 ```
 
-`init` 按 [.hep-lab/sources.json](.hep-lab/sources.json) 的提交准备缺失的四仓，复用现有仓库但不切换、清理或覆盖工作树。已有提交与配置不同会给出提示并保留当前版本；需要更新时由开发者在对应仓执行 Git 操作。`sync` 在当前四仓版本上更新上下文投影，记录实际提交及 dirty 状态，不拉取代码。已有仓库按来源地址匹配远端，支持 `gitlab` 等名称；GitHub SSH/HTTPS 表示视为同一来源。
+`init` 按 [.hep-lab/sources.json](.hep-lab/sources.json) 的提交准备缺失的四个子仓，复用现有仓库但不切换、清理或覆盖工作树。已有提交与配置不同会给出提示并保留当前版本；需要更新时由开发者在对应仓执行 Git 操作。`sync` 在当前五仓版本上更新上下文投影，记录实际提交及 dirty 状态，不拉取代码。已有仓库按来源地址匹配远端，支持 `gitlab` 等名称；GitHub SSH/HTTPS 表示视为同一来源。
 
 `business-agents` 同时登记 GitHub `url` 和 GitLab `internal_url`。本机存在非回环的 `172.16.*.*` IPv4 地址时，初始化和拉取优先使用 GitLab；其他环境优先使用 GitHub。优先来源连接失败时尝试另一端，保留现有远端名称。两端使用同一份 Harness 和固定提交，合并后的内容保持同步。
 
@@ -34,7 +34,7 @@ tools/hep-lab-space sync                 # 首次默认相对符号链接，之�
 tools/hep-lab-space sync --mode copy     # 完整复制，适合容器与交付目录
 tools/hep-lab-space sync --mode symlink  # 切回开发链接
 tools/hep-lab-space doctor
-tools/hep-lab-space status               # 聚合控制仓与四仓的分支、提交、dirty 状态
+tools/hep-lab-space status               # 聚合控制仓与四个子仓的分支、提交、dirty 状态
 node --test tools/test/*.test.mjs
 ```
 
@@ -58,7 +58,7 @@ tools/hep-lab-repos pull --dry-run
 
 `.hep-lab/manifest.json` 记录来源提交、工作树状态、包摘要和物化方式。`hep-lab.yaml` 保持平台运行入口兼容；这些本地结果均不提交。重复同步无变化时不改写文件。`--root <目录>` 可指定已包含本仓上下文源码与配置的工作区；命令从任意 cwd 启动都默认使用脚本所属工作区。
 
-根仓只管理工作区入口、来源清单和共享开发 Skill。四个仓库目录是独立克隆，均由根仓 `.gitignore` 排除；根仓不记录子仓文件、gitlink 或 `.gitmodules`。根仓 `git status` 只显示控制文件，聚合状态使用 `status`。`verify` 只检查固定四仓的忽略项和索引边界，不扫描子仓内容。
+根仓只管理工作区入口、来源清单和共享开发 Skill。四个子仓目录是独立克隆，均由根仓 `.gitignore` 排除；根仓不记录子仓文件、gitlink 或 `.gitmodules`。根仓 `git status` 只显示控制文件，聚合状态使用 `status`。`verify` 校验五仓来源锁、工作树和索引边界，不读取业务运行数据。
 
 开发 Skill 使用 Codex 的 [AGENTS.md 发现规则](https://learn.chatgpt.com/docs/agent-configuration/agents-md)和[原生 Skill 发现规则](https://learn.chatgpt.com/docs/build-skills)。管理助手的运行技能由 DSH HOME 原生发现，不投影到开发工作区。完整平台运行检查和业务效果验收见程序仓 [README.md](https://github.com/wr5912/harness-engineering-platform/blob/main/README.md) 与项目验收矩阵。
 
