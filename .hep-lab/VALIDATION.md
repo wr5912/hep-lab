@@ -17,7 +17,7 @@
 
 2026-11-14，平台在真实新目录完成离线 prepare 与启动。已认证 HTTP/RPC 新建的原生会话 cwd 为 `/home/admin/work/hep-lab/manager-workspace`；真实模型调用 `platform_agents context`、Skill 和原生 `bash`，确认两个仓库各自的 `.git` 并正常结束。旧会话激活后通过原生 `working-directory/change` 使用新数据根，原始 header cwd 保留。锁定 DSH 的指令发现只返回管理 HOME 的 AGENTS.md。原始执行证据保存在程序仓忽略目录 `.local/acceptance/physical-manager-workspace/`。
 
-2026-11-14，平台只登记 `manager-workspace` 一个原生工作区，两个子仓保留为业务目标；撤销其他登记保留磁盘文件和历史会话，删除仅保护绑定工作区。类型检查、构建及 36 项相关回归通过；真实实例完成 7 项认证 HTTP/RPC 检查，浏览器确认唯一工作区及历史会话可见、无 pageerror。浏览器另发现 Codex 插件两个根路径请求返回 404，不能据此声明 console 无错误。证据位于程序仓 `.local/acceptance/single-manager-workspace/`。
+2026-11-14，平台只登记 `manager-workspace` 一个原生工作区，两个子仓保留为业务目标；撤销其他登记保留磁盘文件和历史会话，删除仅保护绑定工作区。插件定向回归 38/38、迁移回归 72/72、Web 适配器 26/26、工作区初始化与镜像策略 30/30、控制工具 23/23 通过，程序类型检查与平台 doctor 通过。真实实例完成 7 项认证 HTTP/RPC 检查，浏览器确认唯一工作区、历史会话可见、无 pageerror 和 console error；Codex 插件模型与登录状态返回 200，状态为 `signed-in`。业务仓在 `172.16.*.*` 实际网卡环境优先 GitLab，其他环境优先 GitHub，来源提交和 Git 工作树核对通过。证据位于程序仓 `.local/acceptance/single-manager-workspace/`。
 
 ## /home/luopeng/hep-lab 验收记录
 
