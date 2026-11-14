@@ -17,7 +17,7 @@
       "path": "manager-workspace/harness-engineering-platform-data",
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
       "ref": "main",
-      "commit": "159375be35a2007a169e9a74fb9b02a0b1c35d6c"
+      "commit": "2e3a47a3a8a65fcb95cfcc88837e639aef79742d"
     },
     "platform_manager_dsh_home": {
       "path": "platform-manager-dsh-home",
@@ -29,7 +29,7 @@
       "path": "manager-workspace/business-agents",
       "url": "http://172.16.138.233/ai-soc/business-agents.git",
       "ref": "main",
-      "commit": "eae3bdea5df57c48bcabe0147276f4a40c4acf18"
+      "commit": "1c852f2972bf4dd9068dd2d53fce211c6e2b7227"
     }
   },
   "controlCommit": "base; release snapshot records exact HEAD",
@@ -57,12 +57,12 @@
       {
         "name": "businessAccess",
         "ref": "data:config/business-access.json",
-        "sha256": "5f71727ead852d9e242746b09bb5970e9c11407e570ac9b9ce5ce9e7aedef228"
+        "sha256": "3ac37c776584c01e63b85aa2d10898e7d002db664f5d359f26d10de6f84b17d3"
       },
       {
         "name": "repositories",
         "ref": "data:config/repositories.json",
-        "sha256": "7774536fe60da4d3700bfb41208b5e71411d31bffd295a7bf99c3f85c85c7b5e"
+        "sha256": "6432167728cbc976b9479ec7d5d1a481d2c038d91c1cb1875970b86657952dd8"
       },
       {
         "name": "managerProfile",
