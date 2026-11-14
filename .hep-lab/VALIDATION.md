@@ -7,8 +7,8 @@
 | 仓库 | 当前提交 | 状态 |
 |---|---|---|
 | hep-lab | 以本次提交后的 `main` 为准 | 控制工具与五仓锁 |
-| harness-engineering-platform | `3712ccfc2b2a5ec21165039cc6f3098cdc9b777f` | 旧 Experiment/Candidate 来源已拒绝 |
-| harness-engineering-platform-data | `2a9539bbaed789e57818b090ca4b01693e028039` | 旧 Harness/评测闭包已清理，保留新评测运行目录 |
+| harness-engineering-platform | `48b9eeaf11e8719416f9c2a7bc6ca5b7c2c61879` | 旧 Experiment/Candidate 来源已拒绝 |
+| harness-engineering-platform-data | `b26c3e018696fbd08f779cfc05af1ab8c5a68863` | 旧 Harness/评测闭包已清理，保留新评测运行目录 |
 | platform-manager-dsh-home | `4acb3d60bdf263a0341b4ecf84a3849fd80933eb` | Skill 链接与当前用户 patch |
 | business-agents | `a107bb0c4989b69541c825d2111681bdc1ad6c61` | 23 个 Agent，9 个 active 发布清单 |
 
