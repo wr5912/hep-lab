@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, readFileSync, readdirSync, readlinkSync, realpathSync, mkdirSync, writeFileSync, renameSync, rmSync, cpSync, symlinkSync } from 'node:fs'
 import { dirname, join, relative, resolve, isAbsolute } from 'node:path'
+import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 
@@ -11,7 +12,7 @@ const managerWorkspaceMarker = '.manager-workspace'
 const managerWorkspaceMarkerContent = '平台管理助手业务工作区：harness-engineering-platform-data 与 business-agents。\n'
 export const repositoryPaths = { ...names, data: `${managerWorkspaceName}/${names.data}`, business_agents: `${managerWorkspaceName}/${names.business_agents}` }
 const version = '1.0.0'
-type Repo = { url: string, ref?: string, commit?: string }
+export type Repo = { url: string, internal_url?: string, ref?: string, commit?: string }
 type Skill = { name: string, repository: string, path: string, scope: string }
 type Config = { schema_version: number, mode: 'symlink' | 'copy', repositories: Record<string, Repo>, skills: Skill[] }
 const exists = (path: string) => { try { lstatSync(path); return true } catch { return false } }
@@ -23,10 +24,34 @@ function git(path: string | undefined, args: string[]) {
 export function originIdentity(url: string) {
   return url.replace(/^git@([^:]+):/, 'https://$1/').replace(/^ssh:\/\/git@/, 'https://').replace(/\.git\/?$/, '').replace(/\/$/, '')
 }
-function sourceRemote(path: string, source: string) {
-  for (const remote of git(path, ['remote']).split('\n').filter(Boolean)) {
-    const url = git(path, ['remote', 'get-url', remote])
-    if (originIdentity(url) === originIdentity(source)) return { remote, url }
+export function isInternalNetwork(interfaces = os.networkInterfaces()) {
+  return Object.values(interfaces).flat().some(item => item && !item.internal && item.family === 'IPv4' && item.address.startsWith('172.16.'))
+}
+export function configureCommitIdentity(path: string) {
+  if (isInternalNetwork() && exists(join(path, '.git'))) git(path, ['config', '--local', 'user.email', 'luopeng@123.com'])
+}
+export function sourceUrls(repo: Pick<Repo, 'url' | 'internal_url'>, interfaces = os.networkInterfaces()): string[] {
+  if (!repo.internal_url) return [repo.url]
+  return [...new Set(isInternalNetwork(interfaces) ? [repo.internal_url, repo.url] : [repo.url, repo.internal_url])]
+}
+export function sourceRemotes(path: string, repo: Pick<Repo, 'url' | 'internal_url'>) {
+  const remotes = git(path, ['remote']).split('\n').filter(Boolean).map(remote => ({ remote, url: git(path, ['remote', 'get-url', remote]) }))
+  return sourceUrls(repo).map(url => remotes.find(item => originIdentity(item.url) === originIdentity(url)) ?? { remote: null, url })
+}
+function registerMirrors(path: string, repo: Repo) {
+  if (!repo.internal_url) return
+  for (const source of sourceRemotes(path, repo)) {
+    if (source.remote) continue
+    const base = source.url === repo.internal_url ? 'gitlab' : 'github'
+    const remotes = git(path, ['remote']).split('\n')
+    let name = base
+    for (let suffix = 2; remotes.includes(name); suffix++) name = `${base}-${suffix}`
+    git(path, ['remote', 'add', name, source.url])
+  }
+}
+function sourceRemote(path: string, repo: Repo) {
+  for (const source of sourceRemotes(path, repo)) {
+    if (source.remote) return source
   }
   throw Error(`仓库来源不同，保持原样：${path}`)
 }
@@ -81,7 +106,7 @@ function repositoryStates(root: string, config: Config) {
     const path = join(root, name)
     if (!exists(join(path, '.git'))) throw Error(`仓库尚未准备：${path}，先运行 init`)
     if (lstatSync(path).isSymbolicLink() || !lstatSync(path).isDirectory() || realpathSync(path) !== path || resolve(git(path, ['rev-parse', '--show-toplevel'])) !== path) throw Error(`目录不是独立仓库：${path}`)
-    const source = sourceRemote(path, config.repositories[key].url)
+    const source = sourceRemote(path, config.repositories[key])
     return [key, { path: name, ...source, ref: config.repositories[key].ref ?? null, configured_commit: config.repositories[key].commit ?? null, commit: git(path, ['rev-parse', 'HEAD']), dirty: Boolean(git(path, ['status', '--porcelain'])) }]
   }))
 }
@@ -223,21 +248,31 @@ export function initialize(root: string, allowFloating = false, mode?: 'symlink'
     if ((!repo.commit || !/^[0-9a-f]{40}$/.test(repo.commit)) && !allowFloating) throw Error(`${key} 需要固定的 40 位提交；开发时可使用 --allow-floating-ref`)
     if (exists(path)) {
       if (lstatSync(path).isSymbolicLink() || !lstatSync(path).isDirectory() || realpathSync(path) !== path || !exists(join(path, '.git')) || resolve(git(path, ['rev-parse', '--show-toplevel'])) !== path) throw Error(`已有目录不是对应的独立仓库，保持原样：${path}`)
-      sourceRemote(path, repo.url)
+      sourceRemote(path, repo)
     }
   }
+  configureCommitIdentity(root)
   for (const [key, name] of Object.entries(repositoryPaths)) {
     const repo = config.repositories[key], path = join(root, name)
-    if (exists(path)) continue
+    if (exists(path)) { registerMirrors(path, repo); configureCommitIdentity(path); continue }
     const temporary = join(root, `.hep-lab/clone-${key}-${randomUUID()}.tmp`)
-    try {
-      git(undefined, ['clone', '--no-checkout', '--', repo.url, temporary])
-      const target = repo.commit ?? `origin/${repo.ref ?? 'main'}`
-      try { git(temporary, ['cat-file', '-e', `${target}^{commit}`]) } catch { git(temporary, ['fetch', '--no-tags', 'origin', target]) }
-      git(temporary, ['checkout', '--detach', target])
-      mkdirSync(dirname(path), { recursive: true })
-      renameSync(temporary, path)
-    } finally { rmSync(temporary, { recursive: true, force: true }) }
+    let lastError: unknown
+    for (const url of sourceUrls(repo)) {
+      try {
+        git(undefined, ['clone', '--no-checkout', '--', url, temporary])
+        const target = repo.commit ?? `origin/${repo.ref ?? 'main'}`
+        try { git(temporary, ['cat-file', '-e', `${target}^{commit}`]) } catch { git(temporary, ['fetch', '--no-tags', 'origin', target]) }
+        git(temporary, ['checkout', '--detach', target])
+        registerMirrors(temporary, repo)
+        configureCommitIdentity(temporary)
+        mkdirSync(dirname(path), { recursive: true })
+        renameSync(temporary, path)
+        lastError = undefined
+        break
+      } catch (error) { lastError = error }
+      finally { rmSync(temporary, { recursive: true, force: true }) }
+    }
+    if (lastError) throw lastError
   }
   const result = sync(root, mode)
   return { ...result, command: 'init', warnings: Object.entries(result.repositories).filter(([, repo]) => repo.configured_commit && repo.commit !== repo.configured_commit).map(([key]) => `${key} 保留已有版本，与来源锁定不同；未切换工作树`) }

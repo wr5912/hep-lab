@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
+import os from 'node:os'
 import { join, resolve } from 'node:path'
 import test from 'node:test'
 import { names, repositoryPaths } from '../hep-lab-space.mts'
@@ -88,4 +89,53 @@ test('pull 只快进 clean 目标分支，并保留 dirty 工作树和 detached 
   assert.equal(existsSync(dirtyPath), true)
   assert.equal(commit(join(f.root, repositoryPaths.data)), f.sources.data.commit)
   assert.equal(commit(join(f.root, repositoryPaths.business_agents)), commit(source))
+})
+test('拉取按环境选择双端，优先端失败时回退，不覆盖非快进分歧', t => {
+  const f = fixture(t)
+  const source = f.sources.business_agents.url
+  const mirror = join(f.temp, 'github-business')
+  execFileSync('git', ['clone', '-q', source, mirror])
+  git(mirror, 'config', 'user.name', 'Repository Test')
+  git(mirror, 'config', 'user.email', 'test@example.invalid')
+  const business = join(f.root, repositoryPaths.business_agents)
+  git(business, 'remote', 'add', 'github', mirror)
+  const repo = f.sources.business_agents
+  repo.url = mirror
+  repo.internal_url = source
+  const configPath = join(f.root, '.hep-lab/sources.json')
+  writeFileSync(configPath, JSON.stringify({ repositories: f.sources }))
+  git(f.root, 'add', '.hep-lab/sources.json')
+  git(f.root, 'commit', '-qm', 'configure mirrors')
+  const interfaces = t.mock.method(os, 'networkInterfaces', () => ({}))
+  git(business, 'config', 'user.email', 'outside@example.invalid')
+  assert.equal(pullRepositories(f.root, true).results.at(-1).remote, 'github')
+  interfaces.mock.mockImplementation(() => ({ eth0: [{ address: '172.16.1.10', family: 'IPv4', internal: false }] }))
+  assert.equal(pullRepositories(f.root, true).results.at(-1).remote, 'gitlab')
+  assert.equal(git(business, 'config', 'user.email'), 'outside@example.invalid')
+
+  writeFileSync(join(source, 'internal.txt'), 'internal\n')
+  git(source, 'add', '.')
+  git(source, 'commit', '-qm', 'internal advance')
+  const internal = pullRepositories(f.root).results.at(-1)
+  assert.equal(internal.ok, true)
+  assert.equal(internal.remote, 'gitlab')
+  assert.equal(commit(business), commit(source))
+  for (const path of [f.root, ...Object.values(repositoryPaths).map(name => join(f.root, name))]) assert.equal(git(path, 'config', '--local', 'user.email'), 'luopeng@123.com')
+
+  // GitHub 可连通但历史分歧，不能静默改用 GitLab 把这次拉取报告为成功。
+  writeFileSync(join(mirror, 'outside.txt'), 'outside\n')
+  git(mirror, 'add', '.')
+  git(mirror, 'commit', '-qm', 'outside advance')
+  interfaces.mock.mockImplementation(() => ({}))
+  const divergent = pullRepositories(f.root).results.at(-1)
+  assert.equal(divergent.ok, false)
+  assert.equal(commit(business), commit(source))
+
+  git(business, 'remote', 'set-url', 'github', join(f.temp, 'unavailable'))
+  repo.url = join(f.temp, 'unavailable')
+  writeFileSync(configPath, JSON.stringify({ repositories: f.sources }))
+  const fallback = pullRepositories(f.root).results.at(-1)
+  assert.equal(fallback.ok, true)
+  assert.equal(fallback.remote, 'gitlab')
+  assert.equal(commit(business), commit(source))
 })

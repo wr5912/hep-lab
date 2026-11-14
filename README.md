@@ -12,6 +12,10 @@ tools/hep-lab-space verify --fast
 
 `init` 按 [.hep-lab/sources.json](.hep-lab/sources.json) 的提交准备缺失的四仓，复用现有仓库但不切换、清理或覆盖工作树。已有提交与配置不同会给出提示并保留当前版本；需要更新时由开发者在对应仓执行 Git 操作。`sync` 在当前四仓版本上更新上下文投影，记录实际提交及 dirty 状态，不拉取代码。已有仓库按来源地址匹配远端，支持 `gitlab` 等名称；GitHub SSH/HTTPS 表示视为同一来源。
 
+`business-agents` 同时登记 GitHub `url` 和 GitLab `internal_url`。本机存在非回环的 `172.16.*.*` IPv4 地址时，初始化和拉取优先使用 GitLab；其他环境优先使用 GitHub。优先来源连接失败时尝试另一端，保留现有远端名称。两端使用同一份 Harness 和固定提交，合并后的内容保持同步。
+
+在 `172.16.*.*` 环境中，`init` 和实际 `pull` 会将仓库的 Git 提交邮箱设为 `luopeng@123.com`，保留提交者姓名。其他环境沿用原有 Git 身份，`show` 和 `--dry-run` 不改配置。
+
 目录布局如下，四个仓库分别独立维护 Git：
 
 ```text

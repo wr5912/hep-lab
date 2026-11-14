@@ -2,12 +2,23 @@ import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
+import os from 'node:os'
 import { join, resolve } from 'node:path'
 import test from 'node:test'
-import { initialize, sync, plan, verify, status, boundaryIssues, names, repositoryPaths, originIdentity } from '../hep-lab-space.mts'
+import { initialize, sync, plan, verify, status, boundaryIssues, names, repositoryPaths, originIdentity, sourceUrls, configureCommitIdentity } from '../hep-lab-space.mts'
 
 const git = (path, ...args) => execFileSync('git', ['-C', path, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
 const save = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n')
+test('业务来源只在本机非回环 IPv4 属于 172.16.*.* 时优先内网', () => {
+  const repo = { url: 'https://github.com/wr5912/business-agents.git', internal_url: 'http://172.16.138.233/ai-soc/business-agents.git' }
+  const addresses = (...items) => ({ eth0: items.map(([address, family = 'IPv4', internal = false]) => ({ address, family, internal })) })
+  assert.deepEqual(sourceUrls(repo, addresses(['172.16.1.2'])), [repo.internal_url, repo.url])
+  for (const interfaces of [{}, addresses(['192.168.1.2']), addresses(['172.17.0.1']), addresses(['172.160.1.2']), addresses(['172.16.1.2', 'IPv4', true]), addresses(['::ffff:172.16.1.2', 'IPv6'])]) {
+    assert.deepEqual(sourceUrls(repo, interfaces), [repo.url, repo.internal_url])
+  }
+  assert.deepEqual(sourceUrls(repo, addresses(['192.168.1.2'], ['172.16.138.228'])), [repo.internal_url, repo.url])
+  assert.deepEqual(sourceUrls({ url: repo.url }, addresses(['172.16.1.2'])), [repo.url])
+})
 function fixture(t) {
   const temp = mkdtempSync(join(tmpdir(), 'hep-context-test-')), root = join(temp, 'lab')
   t.after(() => rmSync(temp, { recursive: true, force: true }))
@@ -60,6 +71,43 @@ test('管理 HOME 没有本地研发覆盖文件时，版本化 README 仍可完
   rmSync(join(f.root, repositoryPaths.platform_manager_dsh_home, 'AGENTS.override.md'))
   writeFileSync(join(f.root, repositoryPaths.platform_manager_dsh_home, 'README.md'), 'platform manager home\n')
   assert.equal(initialize(f.root).warnings.length, 0)
+  assert.equal(verify(f.root).valid, true)
+})
+test('初始化按环境选择真实镜像，登记双端且保留 origin 和已有工作树', t => {
+  const f = fixture(t)
+  const interfaces = t.mock.method(os, 'networkInterfaces', () => ({ eth0: [{ address: '172.16.138.228', family: 'IPv4', internal: false }] }))
+  const repo = f.config.repositories.business_agents
+  const mirror = join(f.temp, 'gitlab-business')
+  execFileSync('git', ['clone', '-q', repo.url, mirror])
+  repo.internal_url = mirror
+  save(f.configPath, f.config)
+  initialize(f.root)
+  const business = join(f.root, repositoryPaths.business_agents)
+  assert.equal(git(business, 'remote', 'get-url', 'origin'), mirror)
+  assert.equal(git(business, 'remote', 'get-url', 'github'), repo.url)
+  writeFileSync(join(business, 'keep.txt'), 'local\n')
+  const before = git(business, 'rev-parse', 'HEAD')
+  initialize(f.root)
+  assert.equal(git(business, 'rev-parse', 'HEAD'), before)
+  assert.equal(readFileSync(join(business, 'keep.txt'), 'utf8'), 'local\n')
+  assert.equal(git(business, 'remote', 'get-url', 'origin'), mirror)
+  for (const name of Object.values(repositoryPaths)) assert.equal(git(join(f.root, name), 'config', '--local', 'user.email'), 'luopeng@123.com')
+  git(business, 'config', 'user.email', 'outside@example.invalid')
+  interfaces.mock.mockImplementation(() => ({}))
+  configureCommitIdentity(business)
+  assert.equal(git(business, 'config', 'user.email'), 'outside@example.invalid')
+})
+test('优先镜像连接失败后清理未完成克隆，使用另一端的固定提交', t => {
+  const f = fixture(t)
+  t.mock.method(os, 'networkInterfaces', () => ({}))
+  const repo = f.config.repositories.business_agents
+  repo.internal_url = repo.url
+  repo.url = join(f.temp, 'unavailable-github')
+  save(f.configPath, f.config)
+  initialize(f.root)
+  const business = join(f.root, repositoryPaths.business_agents)
+  assert.equal(git(business, 'remote', 'get-url', 'origin'), repo.internal_url)
+  assert.equal(git(business, 'rev-parse', 'HEAD'), repo.commit)
   assert.equal(verify(f.root).valid, true)
 })
 test('复制整个包、保留脚本权限；源变化显示漂移且支持复制和链接双向切换', t => {
