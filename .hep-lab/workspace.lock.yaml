@@ -5,19 +5,19 @@
       "path": ".",
       "url": "https://github.com/wr5912/hep-lab.git",
       "ref": "main",
-      "commit": "f3edc85eeb0a5ae3cc2ac4d5bfe7a5ce01ff4518"
+      "commit": "2fb3968298eb41b7c44b3ba21a51d20d054d82ac"
     },
     "platform": {
       "path": "harness-engineering-platform",
       "url": "git@github.com:wr5912/harness-engineering-platform.git",
       "ref": "main",
-      "commit": "a7d0c7134fc2607e9f58fc6fdcaecf325fdbc2c4"
+      "commit": "f38f11a01b930f89d0908406308cd5e0574a281b"
     },
     "data": {
       "path": "manager-workspace/harness-engineering-platform-data",
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
       "ref": "main",
-      "commit": "4ab15f56d57851c08dfdabc4659b8019bb514c72"
+      "commit": "d510fb7b756f05391f928abbd381b53c1c2f12a6"
     },
     "platform_manager_dsh_home": {
       "path": "platform-manager-dsh-home",
@@ -36,9 +36,9 @@
   "environment": "lab",
   "arch": "arm64",
   "image": {
-    "tag": "ai-agent-harness/dsh:ddac96760-arm64-501c99f44738",
-    "fingerprint": "sha256:501c99f447385a302e831a221082989db7ca0954ffbc86a29d2d5e9e4130fdc4",
-    "id": "sha256:d2183570ad60096838da56308d58034646927e80eb4fe0ba42e7aacc2d51a2bc",
+    "tag": "ai-agent-harness/dsh:ddac96760-arm64-9eb29ba0cf5a",
+    "fingerprint": "sha256:9eb29ba0cf5a5494324be2282cf29c259215c91f2645fd60a591f3a48879f0b9",
+    "id": "sha256:09c16eab839429b71c83717a08c197544fabb0a20e7ff6bd4a96a8190cb9990b",
     "arch": "arm64"
   },
   "runtime": {
@@ -57,7 +57,7 @@
       {
         "name": "businessAccess",
         "ref": "data:config/business-access.json",
-        "sha256": "3ac37c776584c01e63b85aa2d10898e7d002db664f5d359f26d10de6f84b17d3"
+        "sha256": "3cb03612e7380b13a9a1e1fe179e94a0bddd43a3f42b29c6b88ab8f04c4b72d9"
       },
       {
         "name": "repositories",
