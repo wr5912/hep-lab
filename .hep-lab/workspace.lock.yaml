@@ -5,19 +5,19 @@
       "path": ".",
       "url": "https://github.com/wr5912/hep-lab.git",
       "ref": "main",
-      "commit": "e73b7cb4a4aef534c66e779b02eb9c5944b1ba56"
+      "commit": "d5368f854f865dc89eda2f4ee8b410bd9be15858"
     },
     "platform": {
       "path": "harness-engineering-platform",
       "url": "git@github.com:wr5912/harness-engineering-platform.git",
       "ref": "main",
-      "commit": "6ec12fae3dc0b752bb02a9b833fd10584a826731"
+      "commit": "dedd8a7ecb64a091eafcb592b4eb3c21560aa5db"
     },
     "data": {
       "path": "manager-workspace/harness-engineering-platform-data",
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
       "ref": "main",
-      "commit": "84d93869b5a809bcbb6cd6a30575ecd557772c01"
+      "commit": "f760374137b101ef77031ca34372a79a5d0f3d2c"
     },
     "platform_manager_dsh_home": {
       "path": "platform-manager-dsh-home",
@@ -29,7 +29,7 @@
       "path": "manager-workspace/business-agents",
       "url": "http://172.16.138.233/ai-soc/business-agents.git",
       "ref": "main",
-      "commit": "cfe0e3b151c2e2843db0df79ffe2932c0af599ca"
+      "commit": "062505216e6302c4f869985cd52edc92adcd40ed"
     }
   },
   "controlCommit": "base; release snapshot records exact HEAD",
@@ -62,7 +62,7 @@
       {
         "name": "repositories",
         "ref": "data:config/repositories.json",
-        "sha256": "7a55cafc8f5e6fd8ce3ff18dc8a7cadf02c543ca7567d6e59b8d274508a191b1"
+        "sha256": "2d1f3039a18dafcde8305fdb3257c597fca6e04a062f6145d9e605aa3f998cd5"
       },
       {
         "name": "managerProfile",
