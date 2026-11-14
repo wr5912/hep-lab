@@ -7,7 +7,9 @@ import { parseArgs } from 'node:util'
 
 export const names = { platform: 'harness-engineering-platform', data: 'harness-engineering-platform-data', platform_manager_dsh_home: 'platform-manager-dsh-home', business_agents: 'business-agents' }
 const managerWorkspaceName = 'manager-workspace'
-const managerWorkspaceRepositories = { data: names.data, business_agents: names.business_agents }
+const managerWorkspaceMarker = '.manager-workspace'
+const managerWorkspaceMarkerContent = '平台管理助手业务工作区：harness-engineering-platform-data 与 business-agents。\n'
+export const repositoryPaths = { ...names, data: `${managerWorkspaceName}/${names.data}`, business_agents: `${managerWorkspaceName}/${names.business_agents}` }
 const version = '1.0.0'
 type Repo = { url: string, ref?: string, commit?: string }
 type Skill = { name: string, repository: string, path: string, scope: string }
@@ -75,10 +77,10 @@ function load(root: string): Config {
   return config
 }
 function repositoryStates(root: string, config: Config) {
-  return Object.fromEntries(Object.entries(names).map(([key, name]) => {
+  return Object.fromEntries(Object.entries(repositoryPaths).map(([key, name]) => {
     const path = join(root, name)
     if (!exists(join(path, '.git'))) throw Error(`仓库尚未准备：${path}，先运行 init`)
-    if (resolve(git(path, ['rev-parse', '--show-toplevel'])) !== path) throw Error(`目录不是独立仓库：${path}`)
+    if (lstatSync(path).isSymbolicLink() || !lstatSync(path).isDirectory() || realpathSync(path) !== path || resolve(git(path, ['rev-parse', '--show-toplevel'])) !== path) throw Error(`目录不是独立仓库：${path}`)
     const source = sourceRemote(path, config.repositories[key].url)
     return [key, { path: name, ...source, ref: config.repositories[key].ref ?? null, configured_commit: config.repositories[key].commit ?? null, commit: git(path, ['rev-parse', 'HEAD']), dirty: Boolean(git(path, ['status', '--porcelain'])) }]
   }))
@@ -86,7 +88,7 @@ function repositoryStates(root: string, config: Config) {
 function contextIssues(root: string) {
   const entries = [
     { label: 'AGENTS.md', candidates: ['AGENTS.md'] },
-    ...Object.entries(names).map(([key, name]) => key === 'platform_manager_dsh_home'
+    ...Object.entries(repositoryPaths).map(([key, name]) => key === 'platform_manager_dsh_home'
       ? { label: `${name}/AGENTS.override.md`, candidates: [`${name}/AGENTS.override.md`, `${name}/README.md`] }
       : { label: `${name}/AGENTS.md`, candidates: [`${name}/AGENTS.md`] }),
   ]
@@ -95,43 +97,40 @@ function contextIssues(root: string) {
 function managerWorkspaceIssues(root: string) {
   const workspace = join(root, managerWorkspaceName), issues: string[] = []
   if (!exists(workspace)) return [`缺少管理助手默认工作区：${managerWorkspaceName}/`]
-  if (lstatSync(workspace).isSymbolicLink() || !lstatSync(workspace).isDirectory()) return [`管理助手默认工作区不是普通目录：${workspace}`]
-  for (const [key, name] of Object.entries(managerWorkspaceRepositories)) {
-    const path = join(workspace, name), expected = `../${name}`
-    if (!exists(path)) { issues.push(`缺少管理助手工作区入口：${managerWorkspaceName}/${name}`); continue }
-    if (!lstatSync(path).isSymbolicLink() || readlinkSync(path) !== expected) { issues.push(`管理助手工作区入口必须指向 ${expected}：${path}`); continue }
-    try {
-      if (realpathSync(path) !== realpathSync(join(root, name))) issues.push(`管理助手工作区入口目标不匹配：${path}`)
-    } catch { issues.push(`管理助手工作区入口目标不可解析：${path}`) }
+  if (lstatSync(workspace).isSymbolicLink() || !lstatSync(workspace).isDirectory() || realpathSync(workspace) !== workspace) return [`管理助手默认工作区必须是真实目录：${workspace}`]
+  const marker = join(workspace, managerWorkspaceMarker)
+  if (!exists(marker) || !lstatSync(marker).isFile() || lstatSync(marker).isSymbolicLink() || !readFileSync(marker, 'utf8').trim()) issues.push(`管理助手工作区标记缺失或无效：${marker}`)
+  for (const key of ['data', 'business_agents'] as const) {
+    const path = join(root, repositoryPaths[key])
+    if (!exists(path)) { issues.push(`缺少管理助手业务仓库：${path}`); continue }
+    if (lstatSync(path).isSymbolicLink() || !lstatSync(path).isDirectory() || realpathSync(path) !== path) issues.push(`管理助手业务仓库必须是真实目录：${path}`)
+    if (exists(join(root, names[key]))) issues.push(`旧根级业务仓库仍存在，请迁移后再初始化：${join(root, names[key])}`)
   }
   return issues
 }
-function ensureManagerWorkspace(root: string) {
+function ensureManagerWorkspaceMarker(root: string) {
   const workspace = join(root, managerWorkspaceName)
-  if (exists(workspace) && (lstatSync(workspace).isSymbolicLink() || !lstatSync(workspace).isDirectory())) throw Error(`管理助手默认工作区不是普通目录：${workspace}`)
-  mkdirSync(workspace, { recursive: true })
-  for (const name of Object.values(managerWorkspaceRepositories)) {
-    const path = join(workspace, name), expected = `../${name}`
-    if (exists(path)) {
-      if (!lstatSync(path).isSymbolicLink() || readlinkSync(path) !== expected || realpathSync(path) !== realpathSync(join(root, name))) throw Error(`管理助手工作区入口已漂移：${path}`)
-      continue
-    }
-    symlinkSync(expected, path, 'dir')
+  if (!exists(workspace) || lstatSync(workspace).isSymbolicLink() || !lstatSync(workspace).isDirectory() || realpathSync(workspace) !== workspace) throw Error(`管理助手默认工作区必须是真实目录：${workspace}`)
+  const marker = join(workspace, managerWorkspaceMarker)
+  if (exists(marker)) {
+    if (!lstatSync(marker).isFile() || lstatSync(marker).isSymbolicLink() || !readFileSync(marker, 'utf8').trim()) throw Error(`管理助手工作区标记无效，保持原样：${marker}`)
+    return
   }
+  writeFileSync(marker, managerWorkspaceMarkerContent, { flag: 'wx', mode: 0o644 })
 }
 export function boundaryIssues(root: string) {
   if (!exists(join(root, '.git'))) return []
   const issues: string[] = []
   // 固定四仓的归属检查，只读取根仓索引，不扫描子仓内容。
   const ignored = existsSync(join(root, '.gitignore')) ? readFileSync(join(root, '.gitignore'), 'utf8').split(/\r?\n/) : []
-  for (const name of Object.values(names)) if (!ignored.includes(`/${name}/`)) issues.push(`根仓 .gitignore 缺少 /${name}/`)
-  const indexed = git(root, ['ls-files', '--stage', '--', ...Object.values(names)])
+  for (const name of Object.values(repositoryPaths)) if (!ignored.includes(`/${name}/`)) issues.push(`根仓 .gitignore 缺少 /${name}/`)
+  const indexed = git(root, ['ls-files', '--stage', '--', ...Object.values(repositoryPaths)])
   if (indexed) issues.push(`根仓索引包含子仓文件或 gitlink，请在根仓移出索引并保留子仓工作树：\n${indexed}`)
   if (existsSync(join(root, '.gitmodules'))) issues.push('四仓使用独立克隆，不需要根仓 .gitmodules')
   return issues
 }
 export function status(root: string) {
-  const repositories = Object.fromEntries([['workspace', '.'], ...Object.entries(names)].map(([key, name]) => {
+  const repositories = Object.fromEntries([['workspace', '.'], ...Object.entries(repositoryPaths)].map(([key, name]) => {
     const path = resolve(root, name)
     if (!exists(join(path, '.git'))) return [key, { path, missing: true }]
     try {
@@ -155,7 +154,7 @@ export function plan(root: string, mode?: 'symlink' | 'copy') {
   let workspace = { commit: null as string | null, dirty: true }
   try { workspace = { commit: git(root, ['rev-parse', 'HEAD']), dirty: Boolean(git(root, ['status', '--porcelain'])) } } catch {}
   const skills = config.skills.map(skill => {
-    const sourceRoot = skill.repository === 'workspace' ? root : join(root, names[skill.repository as keyof typeof names])
+    const sourceRoot = skill.repository === 'workspace' ? root : join(root, repositoryPaths[skill.repository as keyof typeof repositoryPaths])
     const source = inside(sourceRoot, skill.path), target = join(root, '.agents/skills', skill.name)
     if (!existsSync(join(source, 'SKILL.md'))) throw Error(`Skill 源包缺失：${source}`)
     if (lstatSync(source).isSymbolicLink()) throw Error(`Skill 来源必须是唯一源目录：${source}`)
@@ -188,7 +187,7 @@ export function plan(root: string, mode?: 'symlink' | 'copy') {
   return { desired, previous, changes, conflicts, context_issues: [...contextIssues(root), ...boundaryIssues(root), ...managerWorkspaceIssues(root)], manifest_changed: !equal(desired, previousContent) }
 }
 export function sync(root: string, mode?: 'symlink' | 'copy') {
-  ensureManagerWorkspace(root)
+  ensureManagerWorkspaceMarker(root)
   const state = plan(root, mode)
   if (state.conflicts.length) throw Error(state.conflicts.join('\n'))
   if (state.context_issues.length) throw Error(state.context_issues.join('\n'))
@@ -207,7 +206,7 @@ export function sync(root: string, mode?: 'symlink' | 'copy') {
   const runtimePath = join(root, 'hep-lab.yaml')
   let previousRuntime: any
   try { previousRuntime = json(runtimePath) } catch { previousRuntime = null }
-  const runtime = { schema_version: 1, initializer_version: 2, created_at: previousRuntime?.created_at ?? new Date().toISOString(), repositories, paths: { dsh_home: join(root, names.platform_manager_dsh_home), business_agents_root: join(root, names.business_agents), manager_workspace_root: join(root, managerWorkspaceName) } }
+  const runtime = { schema_version: 1, initializer_version: 2, created_at: previousRuntime?.created_at ?? new Date().toISOString(), repositories, paths: { dsh_home: join(root, names.platform_manager_dsh_home), business_agents_root: join(root, repositoryPaths.business_agents), manager_workspace_root: join(root, managerWorkspaceName) } }
   const runtime_changed = writeJson(runtimePath, runtime, 0o600)
   return { command: 'sync', changed: state.manifest_changed || runtime_changed || state.changes.length > 0, changes: state.changes, manager_workspace_root: join(root, managerWorkspaceName), repositories: state.desired.repositories }
 }
@@ -215,16 +214,19 @@ export function initialize(root: string, allowFloating = false, mode?: 'symlink'
   const config = load(root)
   const boundaries = boundaryIssues(root)
   if (boundaries.length) throw Error(boundaries.join('\n'))
+  for (const key of ['data', 'business_agents'] as const) if (exists(join(root, names[key]))) throw Error(`旧根级业务仓库仍存在，请迁移后再初始化：${join(root, names[key])}`)
+  const workspace = join(root, managerWorkspaceName)
+  if (exists(workspace) && (lstatSync(workspace).isSymbolicLink() || !lstatSync(workspace).isDirectory() || realpathSync(workspace) !== workspace)) throw Error(`管理助手默认工作区必须是真实目录：${workspace}`)
   // 预检已有目录，禁止把其他目录或用户的工作树当成可重建目标。
-  for (const [key, name] of Object.entries(names)) {
+  for (const [key, name] of Object.entries(repositoryPaths)) {
     const repo = config.repositories[key], path = join(root, name)
     if ((!repo.commit || !/^[0-9a-f]{40}$/.test(repo.commit)) && !allowFloating) throw Error(`${key} 需要固定的 40 位提交；开发时可使用 --allow-floating-ref`)
     if (exists(path)) {
-      if (!exists(join(path, '.git')) || resolve(git(path, ['rev-parse', '--show-toplevel'])) !== path) throw Error(`已有目录不是对应的独立仓库，保持原样：${path}`)
+      if (lstatSync(path).isSymbolicLink() || !lstatSync(path).isDirectory() || realpathSync(path) !== path || !exists(join(path, '.git')) || resolve(git(path, ['rev-parse', '--show-toplevel'])) !== path) throw Error(`已有目录不是对应的独立仓库，保持原样：${path}`)
       sourceRemote(path, repo.url)
     }
   }
-  for (const [key, name] of Object.entries(names)) {
+  for (const [key, name] of Object.entries(repositoryPaths)) {
     const repo = config.repositories[key], path = join(root, name)
     if (exists(path)) continue
     const temporary = join(root, `.hep-lab/clone-${key}-${randomUUID()}.tmp`)
@@ -233,6 +235,7 @@ export function initialize(root: string, allowFloating = false, mode?: 'symlink'
       const target = repo.commit ?? `origin/${repo.ref ?? 'main'}`
       try { git(temporary, ['cat-file', '-e', `${target}^{commit}`]) } catch { git(temporary, ['fetch', '--no-tags', 'origin', target]) }
       git(temporary, ['checkout', '--detach', target])
+      mkdirSync(dirname(path), { recursive: true })
       renameSync(temporary, path)
     } finally { rmSync(temporary, { recursive: true, force: true }) }
   }

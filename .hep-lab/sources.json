@@ -5,17 +5,17 @@
     "platform": {
       "url": "git@github.com:wr5912/harness-engineering-platform.git",
       "ref": "main",
-      "commit": "4a041c59fce9b0bd32c1b239d9784ca647ef2657"
+      "commit": "a7ada28293505f807eba655e1b262fb65451eeab"
     },
     "data": {
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
       "ref": "main",
-      "commit": "324b3d28db64fdf5caa3d19f77e8d23fa958a4fa"
+      "commit": "55013f5249b45659b6cd551d965a600724644d25"
     },
     "platform_manager_dsh_home": {
       "url": "git@github.com:wr5912/platform-manager-dsh-home.git",
       "ref": "main",
-      "commit": "6af26b7a1ac682e10b4e00c4bbf1ecee9db10f5b"
+      "commit": "2b4d16a5d76f7e965c63c18c8a5da2611974a57b"
     },
     "business_agents": {
       "url": "git@github.com:wr5912/business-agents.git",

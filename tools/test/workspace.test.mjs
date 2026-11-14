@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import test from 'node:test'
-import { initialize, sync, plan, verify, status, boundaryIssues, names, originIdentity } from '../hep-lab-space.mts'
+import { initialize, sync, plan, verify, status, boundaryIssues, names, repositoryPaths, originIdentity } from '../hep-lab-space.mts'
 
 const git = (path, ...args) => execFileSync('git', ['-C', path, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
 const save = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n')
@@ -32,26 +32,33 @@ function fixture(t) {
 test('首次克隆固定提交，真实包资源与可执行权限可达；重复 init/sync 不改写', t => {
   const f = fixture(t), first = initialize(f.root)
   assert.equal(first.changed, true); assert.deepEqual(first.warnings, [])
-  for (const [key, name] of Object.entries(names)) assert.equal(git(join(f.root, name), 'rev-parse', 'HEAD'), f.config.repositories[key].commit)
+  for (const [key, name] of Object.entries(repositoryPaths)) assert.equal(git(join(f.root, name), 'rev-parse', 'HEAD'), f.config.repositories[key].commit)
   assert.equal(readlinkSync(f.target), '../../skills/demo')
-  assert.equal(readlinkSync(join(f.root, 'manager-workspace', names.data)), `../${names.data}`)
-  assert.equal(readlinkSync(join(f.root, 'manager-workspace', names.business_agents)), `../${names.business_agents}`)
-  assert.equal(realpathSync(join(f.root, 'manager-workspace', names.data)), realpathSync(join(f.root, names.data)))
-  assert.equal(realpathSync(join(f.root, 'manager-workspace', names.business_agents)), realpathSync(join(f.root, names.business_agents)))
+  assert.match(readFileSync(join(f.root, 'manager-workspace/.manager-workspace'), 'utf8'), /平台管理助手业务工作区/)
+  for (const key of ['data', 'business_agents']) {
+    const path = join(f.root, repositoryPaths[key])
+    assert.equal(lstatSync(path).isSymbolicLink(), false)
+    assert.equal(realpathSync(path), path)
+    assert.equal(existsSync(join(f.root, names[key])), false)
+  }
   assert.equal(readFileSync(join(f.target, 'references/detail.md'), 'utf8'), 'resource\n')
   const manifest = join(f.root, '.hep-lab/manifest.json'), runtime = join(f.root, 'hep-lab.yaml')
+  const runtimeValue = JSON.parse(readFileSync(runtime, 'utf8'))
+  assert.equal(runtimeValue.repositories.data.path, join(f.root, repositoryPaths.data))
+  assert.equal(runtimeValue.repositories.business_agents.path, join(f.root, repositoryPaths.business_agents))
+  assert.equal(runtimeValue.paths.manager_workspace_root, join(f.root, 'manager-workspace'))
   const before = [readFileSync(manifest, 'utf8'), statSync(manifest).mtimeMs, statSync(runtime).mtimeMs]
   assert.equal(initialize(f.root).changed, false); assert.equal(sync(f.root).changed, false)
   assert.deepEqual([readFileSync(manifest, 'utf8'), statSync(manifest).mtimeMs, statSync(runtime).mtimeMs], before)
   assert.equal(verify(f.root).valid, true)
-  assert.equal(readFileSync(join(f.root, names.platform_manager_dsh_home, 'AGENTS.md'), 'utf8'), 'runtime identity\n')
+  assert.equal(readFileSync(join(f.root, repositoryPaths.platform_manager_dsh_home, 'AGENTS.md'), 'utf8'), 'runtime identity\n')
 })
 test('管理 HOME 没有本地研发覆盖文件时，版本化 README 仍可完成冷启动上下文检查', t => {
   const f = fixture(t)
   initialize(f.root)
-  rmSync(join(f.root, names.platform_manager_dsh_home, 'AGENTS.md'))
-  rmSync(join(f.root, names.platform_manager_dsh_home, 'AGENTS.override.md'))
-  writeFileSync(join(f.root, names.platform_manager_dsh_home, 'README.md'), 'platform manager home\n')
+  rmSync(join(f.root, repositoryPaths.platform_manager_dsh_home, 'AGENTS.md'))
+  rmSync(join(f.root, repositoryPaths.platform_manager_dsh_home, 'AGENTS.override.md'))
+  writeFileSync(join(f.root, repositoryPaths.platform_manager_dsh_home, 'README.md'), 'platform manager home\n')
   assert.equal(initialize(f.root).warnings.length, 0)
   assert.equal(verify(f.root).valid, true)
 })
@@ -99,7 +106,7 @@ test('缺失源阻止同步并保留目标；删除目标可由来源恢复', t 
 })
 test('已有版本和未提交改动保留，manifest 记录实际版本而非配置值', t => {
   const f = fixture(t); initialize(f.root)
-  const path = join(f.root, names.business_agents)
+  const path = join(f.root, repositoryPaths.business_agents)
   git(path, 'config', 'user.name', 'Context Test'); git(path, 'config', 'user.email', 'test@example.invalid')
   writeFileSync(join(path, 'AGENTS.md'), 'new version\n'); git(path, 'add', '.'); git(path, 'commit', '-qm', 'new version')
   writeFileSync(join(path, 'user.txt'), 'keep\n')
@@ -110,10 +117,10 @@ test('已有版本和未提交改动保留，manifest 记录实际版本而非�
   assert.equal(readFileSync(join(path, 'user.txt'), 'utf8'), 'keep\n')
 })
 test('已有无关目录或错误 origin 在任何 clone 前拒绝且不覆盖', t => {
-  const f = fixture(t), business = join(f.root, names.business_agents)
-  mkdirSync(business); writeFileSync(join(business, 'user'), 'keep')
+  const f = fixture(t), business = join(f.root, repositoryPaths.business_agents)
+  mkdirSync(business, { recursive: true }); writeFileSync(join(business, 'user'), 'keep')
   assert.throws(() => initialize(f.root), /不是对应/)
-  assert.equal(existsSync(join(f.root, names.platform)), false)
+  assert.equal(existsSync(join(f.root, repositoryPaths.platform)), false)
   assert.equal(readFileSync(join(business, 'user'), 'utf8'), 'keep')
   rmSync(business, { recursive: true }); initialize(f.root)
   git(business, 'remote', 'set-url', 'origin', f.config.repositories.data.url)
@@ -121,7 +128,7 @@ test('已有无关目录或错误 origin 在任何 clone 前拒绝且不覆盖',
 })
 test('已有 gitlab 远端按来源匹配，初始化和同步保留远端、分支及工作树', t => {
   const f = fixture(t); initialize(f.root)
-  const business = join(f.root, names.business_agents)
+  const business = join(f.root, repositoryPaths.business_agents)
   git(business, 'remote', 'rename', 'origin', 'gitlab')
   git(business, 'checkout', '-b', 'work')
   writeFileSync(join(business, 'user.txt'), 'keep\n')
@@ -144,18 +151,18 @@ test('已有 gitlab 远端按来源匹配，初始化和同步保留远端、分
 test('失败的固定提交检出不留下伪仓库，可修正配置后再次初始化', t => {
   const f = fixture(t); f.config.repositories.platform.commit = 'a'.repeat(40); save(f.configPath, f.config)
   assert.throws(() => initialize(f.root))
-  assert.equal(existsSync(join(f.root, names.platform)), false)
+  assert.equal(existsSync(join(f.root, repositoryPaths.platform)), false)
   f.config.repositories.platform.commit = git(f.config.repositories.platform.url, 'rev-parse', 'HEAD'); save(f.configPath, f.config)
   assert.equal(initialize(f.root).changed, true)
 })
 test('跨仓来源包来源提交可追踪；缺少上下文不生成投影', t => {
   const f = fixture(t); initialize(f.root)
-  const source = join(f.root, names.platform, 'shared/demo'); cpSync(f.pack, source, { recursive: true })
+  const source = join(f.root, repositoryPaths.platform, 'shared/demo'); cpSync(f.pack, source, { recursive: true })
   f.config.skills[0] = { ...f.config.skills[0], repository: 'platform', path: 'shared/demo' }; save(f.configPath, f.config)
   sync(f.root)
   const skill = JSON.parse(readFileSync(join(f.root, '.hep-lab/manifest.json'))).skills[0]
   assert.equal(skill.source_commit, f.config.repositories.platform.commit); assert.equal(skill.source_dirty, true)
-  rmSync(join(f.root, names.data, 'AGENTS.md'))
+  rmSync(join(f.root, repositoryPaths.data, 'AGENTS.md'))
   assert.equal(verify(f.root).valid, false); assert.throws(() => sync(f.root), /缺少研发上下文/)
 })
 test('CLI 从任意 cwd 使用指定根；缺少固定提交需显式允许浮动', t => {
@@ -174,19 +181,19 @@ test('控制仓忽略独立四仓，拒绝 gitlink 和子仓文件入索引且�
   const f = fixture(t)
   git(f.root, 'init', '-b', 'main')
   assert.equal(boundaryIssues(f.root).length, 4)
-  writeFileSync(join(f.root, '.gitignore'), Object.values(names).map(name => `/${name}/`).join('\n') + '\n.hep-lab/manifest.json\nhep-lab.yaml\n.agents/skills/\n')
+  writeFileSync(join(f.root, '.gitignore'), Object.values(repositoryPaths).map(name => `/${name}/`).join('\n') + '\n.hep-lab/manifest.json\nhep-lab.yaml\n.agents/skills/\n')
   initialize(f.root)
   assert.deepEqual(boundaryIssues(f.root), [])
-  const business = join(f.root, names.business_agents), head = git(business, 'rev-parse', 'HEAD')
-  git(f.root, 'update-index', '--add', '--cacheinfo', `160000,${head},${names.business_agents}`)
+  const business = join(f.root, repositoryPaths.business_agents), head = git(business, 'rev-parse', 'HEAD')
+  git(f.root, 'update-index', '--add', '--cacheinfo', `160000,${head},${repositoryPaths.business_agents}`)
   assert.equal(verify(f.root).valid, false)
   assert.throws(() => initialize(f.root), /gitlink/)
   assert.equal(git(business, 'rev-parse', 'HEAD'), head)
-  git(f.root, 'update-index', '--force-remove', names.business_agents)
+  git(f.root, 'update-index', '--force-remove', repositoryPaths.business_agents)
   const blob = git(f.root, 'hash-object', '-w', join(business, 'AGENTS.md'))
-  git(f.root, 'update-index', '--add', '--cacheinfo', `100644,${blob},${names.business_agents}/AGENTS.md`)
+  git(f.root, 'update-index', '--add', '--cacheinfo', `100644,${blob},${repositoryPaths.business_agents}/AGENTS.md`)
   assert.match(boundaryIssues(f.root).join('\n'), /子仓文件/)
-  git(f.root, 'update-index', '--force-remove', `${names.business_agents}/AGENTS.md`)
+  git(f.root, 'update-index', '--force-remove', `${repositoryPaths.business_agents}/AGENTS.md`)
   assert.deepEqual(boundaryIssues(f.root), [])
 })
 test('status 在未初始化、根仓无提交、固定提交 detached 和子仓 dirty 时聚合真实状态', t => {
@@ -196,13 +203,48 @@ test('status 在未初始化、根仓无提交、固定提交 detached 和子仓
   assert.equal(before.repositories.workspace.commit, null)
   assert.equal(before.repositories.workspace.branch, 'main')
   assert.equal(before.repositories.business_agents.missing, true)
-  writeFileSync(join(f.root, '.gitignore'), Object.values(names).map(name => `/${name}/`).join('\n') + '\n')
+  writeFileSync(join(f.root, '.gitignore'), Object.values(repositoryPaths).map(name => `/${name}/`).join('\n') + '\n')
   initialize(f.root)
-  writeFileSync(join(f.root, names.data, 'user'), 'keep\n')
+  writeFileSync(join(f.root, repositoryPaths.data, 'user'), 'keep\n')
   const after = status(f.root)
   assert.equal(after.repositories.data.dirty, true)
   assert.equal(after.repositories.platform.dirty, false)
   assert.equal(after.repositories.platform.branch, null)
   assert.equal(after.repositories.platform.commit, f.config.repositories.platform.commit)
   assert.deepEqual(after.boundary_issues, [])
+})
+
+
+test('业务仓库必须是真实目录，旧根级布局与链接均拒绝且保留内容', t => {
+  const f = fixture(t)
+  const legacy = join(f.root, names.data)
+  mkdirSync(legacy); writeFileSync(join(legacy, 'user.txt'), 'keep')
+  assert.throws(() => initialize(f.root), /旧根级业务仓库/)
+  assert.equal(readFileSync(join(legacy, 'user.txt'), 'utf8'), 'keep')
+  rmSync(legacy, { recursive: true })
+  initialize(f.root)
+  const business = join(f.root, repositoryPaths.business_agents)
+  rmSync(business, { recursive: true })
+  symlinkSync(f.config.repositories.business_agents.url, business, 'dir')
+  assert.throws(() => initialize(f.root), /不是对应的独立仓库/)
+  assert.throws(() => sync(f.root), /不是独立仓库/)
+  assert.equal(lstatSync(business).isSymbolicLink(), true)
+})
+
+
+test('工作区标记由同步恢复，已有正文保持且链接拒绝', t => {
+  const f = fixture(t)
+  initialize(f.root)
+  const marker = join(f.root, 'manager-workspace/.manager-workspace')
+  rmSync(marker)
+  assert.equal(verify(f.root).valid, false)
+  sync(f.root)
+  assert.match(readFileSync(marker, 'utf8'), /平台管理助手业务工作区/)
+  writeFileSync(marker, '用户工作区入口\n')
+  sync(f.root)
+  assert.equal(readFileSync(marker, 'utf8'), '用户工作区入口\n')
+  rmSync(marker)
+  symlinkSync(join(f.root, 'AGENTS.md'), marker)
+  assert.throws(() => sync(f.root), /标记无效/)
+  assert.equal(lstatSync(marker).isSymbolicLink(), true)
 })

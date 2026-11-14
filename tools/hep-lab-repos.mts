@@ -1,9 +1,9 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
-import { names, originIdentity } from './hep-lab-space.mts'
+import { names, repositoryPaths, originIdentity } from './hep-lab-space.mts'
 
 type RepoConfig = { url: string, ref?: string, commit?: string }
 type Config = { repositories: Record<string, RepoConfig> }
@@ -33,7 +33,7 @@ function rootRepository(root: string): Repository {
 function childRepositories(root: string, config: Config): Repository[] {
   return Object.entries(names).map(([key, name]) => {
     const item = config.repositories[key]
-    return { key, name, path: join(root, name), url: item.url, ref: item.ref ?? 'main', configuredCommit: item.commit }
+    return { key, name, path: join(root, repositoryPaths[key as keyof typeof repositoryPaths]), url: item.url, ref: item.ref ?? 'main', configuredCommit: item.commit }
   })
 }
 
@@ -52,6 +52,7 @@ function matchingRemote(path: string, source: string) {
 
 function inspect(repository: Repository): RepositoryState {
   try {
+    if (!existsSync(join(repository.path, '.git')) || lstatSync(repository.path).isSymbolicLink() || realpathSync(repository.path) !== repository.path || commandGit(repository.path, ['rev-parse', '--show-toplevel']) !== repository.path) throw Error(`目录不是独立真实仓库：${repository.path}`)
     const source = repository.remote ? { remote: repository.remote, url: commandGit(repository.path, ['remote', 'get-url', repository.remote]) } : matchingRemote(repository.path, repository.url)
     let branch: string | null = null
     try { branch = commandGit(repository.path, ['symbolic-ref', '--quiet', '--short', 'HEAD']) || null } catch {}
