@@ -26,15 +26,16 @@ function platformPlan(root: string, environment: string) {
 export function assertLocked(root: string, lock: any, plan: any) {
   if (lock?.schemaVersion !== 1) throw Error('先执行 hep-lab lock --environment <环境> 并提交锁文件')
   for (const repo of listRepositories(root)) {
-    if (repo.error || repo.dirty) throw Error(`${repo.name} 尚有未提交改动或无法读取；先提交后打包`)
+    if (repo.error) throw Error(`无法读取仓库 ${repo.name}（${repo.path}）：${repo.error}`)
+    if (repo.dirty) throw Error(`${repo.name} 尚有未提交改动（${repo.path}）：\n${git(repo.path, ['status', '--short'])}\n请先提交后打包`)
     const pinned = lock.repositories?.[repo.key]?.commit
     if (repo.key === 'workspace' && pinned) {
       // 入库锁记录控制仓基线；发布快照另记实际 HEAD，避免自引用提交哈希。
       git(root, ['merge-base', '--is-ancestor', pinned, 'HEAD'])
-    } else if (pinned !== repo.commit) throw Error(`${repo.name} 与工作区锁不符；重新 lock 并提交`)
+    } else if (pinned !== repo.commit) throw Error(`${repo.name} 与工作区锁不符：期望提交 ${pinned ?? '缺失'}，实际 ${repo.commit}；重新 lock 并提交`)
   }
   for (const key of ['environment', 'arch', 'image', 'runtime', 'config']) {
-    if (JSON.stringify(lock[key]) !== JSON.stringify(plan[key])) throw Error(`${key} 与工作区锁不符；重新 lock 并提交`)
+    if (JSON.stringify(lock[key]) !== JSON.stringify(plan[key])) throw Error(`${key} 与工作区锁不符：期望 ${JSON.stringify(lock[key]) ?? '缺失'}，实际 ${JSON.stringify(plan[key]) ?? '缺失'}；重新 lock 并提交`)
   }
 }
 
