@@ -15,7 +15,7 @@
 ## 已通过
 
 - `node --test tools/test/*.test.mjs`：24/24。
-- `python3 tools/check_agents.py`：23/23 Agent、560 个可装载文件；Python 单元测试 5/5。
+- `python3 tools/check_agents.py`：23/23 Agent、561 个可装载文件；Python 单元测试 5/5。
 - `python3 mcp/validate_sources.py --business-root ../business-agents`：23 个来源全部固定到 business commit `44e8306f9709884dfcfa9dfa5f6a4ebc41de0cf1`，无旧 `experiment:` 来源和旧资产目录。
 - `python3 mcp/validate_catalog.py`：catalog 校验通过。
 - 平台 TypeScript 检查、Python 编译、strict source 测试 3/3、business source 测试 1/1；评测运行 smoke 已用固定 business source 创建并回读 `evolution/runs/<run-id>`。
