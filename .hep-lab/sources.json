@@ -5,7 +5,7 @@
     "platform": {
       "url": "git@github.com:wr5912/harness-engineering-platform.git",
       "ref": "main",
-      "commit": "641834f46f6a14b04e833dcb5fdfd980f842739c"
+      "commit": "252941b2dda3f0d6ec814acc04a8094dc17b33cc"
     },
     "data": {
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
