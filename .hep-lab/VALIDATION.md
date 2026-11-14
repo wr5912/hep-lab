@@ -8,7 +8,7 @@
 |---|---|---|
 | hep-lab | 本次根仓提交 | 五仓来源锁与工作区工具 |
 | harness-engineering-platform | `37194575eda2b24b93b8b8cb7607df125bfedecb` | business source 严格来源合同 |
-| harness-engineering-platform-data | `8011d0f4599df94db182eda510f15e0a28714d09` | 运行配置、来源登记和新评测目录 |
+| harness-engineering-platform-data | `ba753a8b57b50a25c6043bfbf17d4c67385d674f` | 运行配置、来源登记和新评测目录 |
 | platform-manager-dsh-home | `0f3bdca7e15b47604ecfa0f4d479ef7a2cf60731` | MiMo provider 与管理助手默认路由 |
 | business-agents | `44e8306f9709884dfcfa9dfa5f6a4ebc41de0cf1` | 23 个 Agent，9 个 active 发布清单 |
 
