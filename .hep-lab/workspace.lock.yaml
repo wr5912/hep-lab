@@ -5,13 +5,13 @@
       "path": ".",
       "url": "https://github.com/wr5912/hep-lab.git",
       "ref": "main",
-      "commit": "a604bcca723ae1f97f3e78013919e9607a5ed4e0"
+      "commit": "7a6fc6cf8820baea669e170af91d5a2f26284036"
     },
     "platform": {
       "path": "harness-engineering-platform",
       "url": "git@github.com:wr5912/harness-engineering-platform.git",
       "ref": "main",
-      "commit": "ebe47ec9e93c7567599a69f53953bf57f49a8efd"
+      "commit": "c04dbf9c7d766e4c3407f8c223ba2c02b4beb4e6"
     },
     "data": {
       "path": "manager-workspace/harness-engineering-platform-data",
