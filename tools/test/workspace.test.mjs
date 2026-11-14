@@ -16,6 +16,9 @@ test('业务来源只在本机非回环 IPv4 属于 172.16.*.* 时优先内网',
   for (const interfaces of [{}, addresses(['192.168.1.2']), addresses(['172.17.0.1']), addresses(['172.160.1.2']), addresses(['172.16.1.2', 'IPv4', true]), addresses(['::ffff:172.16.1.2', 'IPv6'])]) {
     assert.deepEqual(sourceUrls(repo, interfaces), [repo.url, repo.internal_url])
   }
+  for (const name of ['docker0', 'veth123', 'br-1234', 'cni0', 'virbr0', 'podman0']) {
+    assert.deepEqual(sourceUrls(repo, { [name]: addresses(['172.16.1.2']) }), [repo.url, repo.internal_url], name)
+  }
   assert.deepEqual(sourceUrls(repo, addresses(['192.168.1.2'], ['172.16.138.228'])), [repo.internal_url, repo.url])
   assert.deepEqual(sourceUrls({ url: repo.url }, addresses(['172.16.1.2'])), [repo.url])
 })

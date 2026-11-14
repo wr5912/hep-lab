@@ -25,7 +25,9 @@ export function originIdentity(url: string) {
   return url.replace(/^git@([^:]+):/, 'https://$1/').replace(/^ssh:\/\/git@/, 'https://').replace(/\.git\/?$/, '').replace(/\/$/, '')
 }
 export function isInternalNetwork(interfaces = os.networkInterfaces()) {
-  return Object.values(interfaces).flat().some(item => item && !item.internal && item.family === 'IPv4' && item.address.startsWith('172.16.'))
+  return Object.entries(interfaces).some(([name, addresses]) =>
+    !/^(?:lo\d*$|docker|veth|br-|cni|virbr|lxcbr|lxdbr|podman|flannel|cali|kube)/i.test(name)
+    && (addresses ?? []).some(item => item && !item.internal && (item.family === 'IPv4' || item.family === 4) && item.address.startsWith('172.16.')))
 }
 export function configureCommitIdentity(path: string) {
   if (isInternalNetwork() && exists(join(path, '.git'))) git(path, ['config', '--local', 'user.email', 'luopeng@123.com'])
