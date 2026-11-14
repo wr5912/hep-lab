@@ -5,19 +5,19 @@
       "path": ".",
       "url": "https://github.com/wr5912/hep-lab.git",
       "ref": "main",
-      "commit": "ded6f1dd314e50e2681476912895d84a37878d32"
+      "commit": "593f3a788183d245d12e3e52fef7b3c2fd926da2"
     },
     "platform": {
       "path": "harness-engineering-platform",
       "url": "git@github.com:wr5912/harness-engineering-platform.git",
       "ref": "main",
-      "commit": "fd851f3e5a3fdf5f74682a1a9056ea66ba94454b"
+      "commit": "ba78430c6f9e9637d1c96c251d223eb7ae2f12ab"
     },
     "data": {
       "path": "manager-workspace/harness-engineering-platform-data",
       "url": "https://github.com/wr5912/harness-engineering-platform-data.git",
       "ref": "main",
-      "commit": "d510fb7b756f05391f928abbd381b53c1c2f12a6"
+      "commit": "4a03626ffb4f20e91097fd754cacb8d8728f7064"
     },
     "platform_manager_dsh_home": {
       "path": "platform-manager-dsh-home",
