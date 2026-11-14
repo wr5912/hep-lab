@@ -280,10 +280,29 @@ export function initialize(root: string, allowFloating = false, mode?: 'symlink'
   return { ...result, command: 'init', warnings: Object.entries(result.repositories).filter(([, repo]) => repo.configured_commit && repo.commit !== repo.configured_commit).map(([key]) => `${key} 保留已有版本，与来源锁定不同；未切换工作树`) }
 }
 export function verify(root: string) {
+  const config = load(root)
   const state = plan(root)
   const issues = [...state.conflicts, ...state.context_issues, ...state.changes.map(item => `Skill 投影需要同步：${item.name}`)]
+  const actual = repositoryStates(root, config)
+  for (const [key, repository] of Object.entries(actual) as [string, any][]) {
+    if (repository.configured_commit && repository.commit !== repository.configured_commit) {
+      issues.push(`${key} 当前提交 ${repository.commit} 与来源锁 ${repository.configured_commit} 不一致`)
+    }
+  }
   if (state.manifest_changed) issues.push('来源记录需要同步')
-  return { command: 'verify', valid: issues.length === 0, issues, manager_workspace_root: join(root, managerWorkspaceName), repositories: state.desired.repositories, skills: state.desired.skills.map(item => item.name) }
+  return { command: 'verify', valid: issues.length === 0, issues, manager_workspace_root: join(root, managerWorkspaceName), repositories: actual, skills: state.desired.skills.map(item => item.name) }
+}
+function doctor(root: string) {
+  const issues: string[] = []
+  for (const command of ['git', 'node']) {
+    try { execFileSync(command, ['--version'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) }
+    catch { issues.push(`缺少运行依赖：${command}`) }
+  }
+  let verification: ReturnType<typeof verify>
+  try { verification = verify(root); issues.push(...verification.issues) }
+  catch (error) { return { command: 'doctor', valid: false, issues: [...issues, (error as Error).message] } }
+  return { command: 'doctor', valid: issues.length === 0, issues, repositories: verification.repositories,
+    manager_workspace_root: verification.manager_workspace_root }
 }
 async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: { root: { type: 'string' }, mode: { type: 'string' }, fast: { type: 'boolean' }, 'allow-floating-ref': { type: 'boolean' }, help: { type: 'boolean' } } })
@@ -293,7 +312,7 @@ async function main() {
   if (values.mode && !['symlink', 'copy'].includes(values.mode)) throw Error('--mode 只能是 symlink 或 copy')
   if (values.mode && !['init', 'sync', 'diff'].includes(command)) throw Error('当前命令不支持 --mode')
   const root = resolve(values.root ?? join(dirname(fileURLToPath(import.meta.url)), '..')), mode = values.mode as 'symlink' | 'copy' | undefined
-  const result = command === 'status' ? status(root) : command === 'init' ? initialize(root, values['allow-floating-ref'], mode) : command === 'sync' ? sync(root, mode) : command === 'diff' ? plan(root, mode) : { ...verify(root), command }
+  const result = command === 'status' ? status(root) : command === 'init' ? initialize(root, values['allow-floating-ref'], mode) : command === 'sync' ? sync(root, mode) : command === 'diff' ? plan(root, mode) : command === 'verify' ? verify(root) : doctor(root)
   console.log(JSON.stringify(result, null, 2))
   if ('valid' in result && !result.valid) process.exitCode = 1
 }

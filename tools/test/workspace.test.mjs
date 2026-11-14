@@ -299,3 +299,10 @@ test('工作区标记由同步恢复，已有正文保持且链接拒绝', t => 
   assert.throws(() => sync(f.root), /标记无效/)
   assert.equal(lstatSync(marker).isSymbolicLink(), true)
 })
+test('verify 拒绝仓库当前提交与来源锁漂移', t => {
+  const f = fixture(t); initialize(f.root)
+  const config = JSON.parse(readFileSync(f.configPath, 'utf8'))
+  config.repositories.platform.commit = 'a'.repeat(40)
+  save(f.configPath, config)
+  assert.equal(verify(f.root).valid, false)
+})
