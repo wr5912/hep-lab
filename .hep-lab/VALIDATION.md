@@ -17,6 +17,8 @@
 
 2026-11-14，平台在真实新目录完成离线 prepare 与启动。已认证 HTTP/RPC 新建的原生会话 cwd 为 `/home/admin/work/hep-lab/manager-workspace`；真实模型调用 `platform_agents context`、Skill 和原生 `bash`，确认两个仓库各自的 `.git` 并正常结束。旧会话激活后通过原生 `working-directory/change` 使用新数据根，原始 header cwd 保留。锁定 DSH 的指令发现只返回管理 HOME 的 AGENTS.md。原始执行证据保存在程序仓忽略目录 `.local/acceptance/physical-manager-workspace/`。
 
+2026-11-14，平台只登记 `manager-workspace` 一个原生工作区，两个子仓保留为业务目标；撤销其他登记保留磁盘文件和历史会话，删除仅保护绑定工作区。类型检查、构建及 36 项相关回归通过；真实实例完成 7 项认证 HTTP/RPC 检查，浏览器确认唯一工作区及历史会话可见、无 pageerror。浏览器另发现 Codex 插件两个根路径请求返回 404，不能据此声明 console 无错误。证据位于程序仓 `.local/acceptance/single-manager-workspace/`。
+
 ## /home/luopeng/hep-lab 验收记录
 
 2026-11-13 UTC，在 `/home/luopeng/hep-lab` 的真实控制仓及四个独立子仓执行。
