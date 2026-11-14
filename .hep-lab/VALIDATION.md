@@ -19,8 +19,8 @@
 - `python3 mcp/validate_sources.py --business-root ../business-agents`：23 个来源全部固定到 business commit，无旧 `experiment:` 来源和旧资产目录。
 - `python3 mcp/validate_catalog.py`：catalog 校验通过。
 - 平台 TypeScript 检查、Python 编译、strict source 测试 3/3、business source 测试 1/1；评测运行 smoke 已用固定 business source 创建并回读 `evolution/runs/<run-id>`。
-- 平台定向 Node 测试：211 项中 208 通过、1 跳过、2 项失败。失败均为仍使用已删除 `evolution/experiments` fixture 的旧测试，已记录为迁移工作；没有恢复旧运行时兼容。
-- 平台服务真实状态：PID `1648211`，`http://10.0.160.32:18120/hep/`，入口 HTTP 303 到登录页。
+- 平台助手定向 Node 测试：96 项中 94 通过、1 跳过、1 项失败；失败是仍使用已删除 `evolution/experiments` fixture 的实例确认测试，没有恢复旧运行时兼容。业务访问大套件的旧 fixture 与缺失运行时依赖仍会失败，不能当作当前业务效果通过。
+- 平台服务真实状态：PID `1669419`，`http://10.0.160.32:18120/hep/`，入口 HTTP 303 到登录页。
 - 已登录的真实管理助手 Session 成功创建、发送一次 prompt 并完成回复；`session/projections` 返回 `MiMo E2E OK`，模型事实为 `xiaomi-token-plan-cn/mimo-v2.6-flash`，turn 1、`llmMs=7076`。
 - 无 AI 助手的控制面 API 已直接核验：登录、`session/list`、`session/create`、`session/modelCatalog`；默认模型和可路由 provider 与配置一致。
 - MiMo `/v1/models` 和 `/v1/chat/completions` 真实探针均 HTTP 200。凭据只存在数据仓 `.local/credentials/models.llm-api-key`，权限 0600，未进入 Git。
