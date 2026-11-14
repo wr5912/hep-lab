@@ -5,7 +5,7 @@
       "path": ".",
       "url": "https://github.com/wr5912/hep-lab.git",
       "ref": "main",
-      "commit": "4bd3650d388983321256304197cd688f06f3d1fa"
+      "commit": "f3edc85eeb0a5ae3cc2ac4d5bfe7a5ce01ff4518"
     },
     "platform": {
       "path": "harness-engineering-platform",
@@ -29,7 +29,7 @@
       "path": "manager-workspace/business-agents",
       "url": "http://172.16.138.233/ai-soc/business-agents.git",
       "ref": "main",
-      "commit": "eae3bdea5df57c48bcabe0147276f4a40c4acf18"
+      "commit": "1c852f2972bf4dd9068dd2d53fce211c6e2b7227"
     }
   },
   "controlCommit": "base; release snapshot records exact HEAD",
